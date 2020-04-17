@@ -143,10 +143,6 @@ func (c *Chrome) connect() error {
 }
 
 func (c *Chrome) setup() error {
-	if err := c.Send("Storage.clearCookies", nil); err != nil {
-		return err
-	}
-
 	if err := c.SendMessageToTarget("Network.enable", nil); err != nil {
 		return err
 	}
@@ -188,11 +184,17 @@ func (c *Chrome) login() error {
 	}
 }
 
+func (c *Chrome) end() {
+	c.Cmd.Process.Kill()
+	c.WS.Close()
+}
+
 func main() {
 	c, err := start()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer c.end()
 
 	if err = c.connect(); err != nil {
 		log.Fatal(err)
@@ -202,19 +204,33 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err = c.login(); err != nil {
-		log.Fatal(err)
-	}
-
 	LeetCodeSession, CSRFToken, err := c.getTokens()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(LeetCodeSession, CSRFToken)
+	if LeetCodeSession != "" && CSRFToken != "" {
+		fmt.Println(LeetCodeSession, CSRFToken)
+		return
+	}
+
+	if err = c.login(); err != nil {
+		log.Fatal(err)
+	}
+
+	LeetCodeSession, CSRFToken, err = c.getTokens()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if LeetCodeSession != "" && CSRFToken != "" {
+		fmt.Println(LeetCodeSession, CSRFToken)
+	} else {
+		fmt.Println("Could not retrieve cookies")
+	}
 }
 
-func (c *Chrome) getTokens() (string, string, error){
+func (c *Chrome) getTokens() (string, string, error) {
 	cookies, err := c.getCookies()
 	if err != nil {
 		return "", "", err
@@ -233,7 +249,6 @@ func (c *Chrome) getTokens() (string, string, error){
 
 	return LeetCodeSession, CSRFToken, nil
 }
-
 
 func (c *Chrome) getCookies() ([]Cookie, error) {
 	if err := c.Send("Storage.getCookies", []string{".leetcode.com"}); err != nil {
