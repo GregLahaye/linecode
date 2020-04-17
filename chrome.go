@@ -45,6 +45,8 @@ type cookie struct {
 	Value string `json:"value"`
 }
 
+var TokensNotFound = errors.New("could not find tokens")
+
 type s map[string]interface{}
 
 func Login(u *User) error {
@@ -59,7 +61,7 @@ func Login(u *User) error {
 	}
 
 	LeetCodeSession, CSRFToken, err := c.findTokens()
-	if err == errors.New("could not find tokens") {
+	if err == TokensNotFound {
 		if err = c.waitForLogin(); err != nil {
 			return err
 		}
@@ -238,12 +240,10 @@ func (c *chrome) findTokens() (string, string, error) {
 	}
 
 	if LeetCodeSession == "" || CSRFToken == "" {
-		err = errors.New("could not find tokens")
-	} else {
-		err = nil
+		return "", "", TokensNotFound
 	}
 
-	return LeetCodeSession, CSRFToken, err
+	return LeetCodeSession, CSRFToken, nil
 }
 
 func (c *chrome) getCookies() ([]cookie, error) {
