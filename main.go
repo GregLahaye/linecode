@@ -7,7 +7,9 @@ import (
 	"golang.org/x/net/websocket"
 	"io"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"regexp"
 )
 
@@ -54,8 +56,29 @@ type Cookie struct {
 
 type s map[string]interface{}
 
+func create() (string, error) {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+
+	dir = path.Join(dir, "leetcode-terminal", "chrome")
+
+	err = os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		return "", err
+	}
+
+	return dir, nil
+}
+
 func start() (*Chrome, error) {
-	args := []string{"--remote-debugging-port=0", "--user-data-dir=/Users/Greg/Desktop"}
+	dir, err := create()
+	if err != nil {
+		return nil, err
+	}
+
+	args := []string{"https://leetcode.com/accounts/login/", "--remote-debugging-port=0", "--user-data-dir=" + dir}
 	cmd := exec.Command("/Program Files (x86)/Google/Chrome/Application/chrome.exe", args...)
 
 	pipe, err := cmd.StderrPipe()
@@ -139,15 +162,7 @@ func (c *Chrome) connect() error {
 		}
 	}
 
-	return nil
-}
-
-func (c *Chrome) setup() error {
 	if err := c.SendMessageToTarget("Network.enable", nil); err != nil {
-		return err
-	}
-
-	if err := c.SendMessageToTarget("Page.navigate", s{"url": "https://leetcode.com/accounts/login/"}); err != nil {
 		return err
 	}
 
@@ -185,8 +200,8 @@ func (c *Chrome) login() error {
 }
 
 func (c *Chrome) end() {
-	c.Cmd.Process.Kill()
 	c.WS.Close()
+	c.Send("Browser.close", nil)
 }
 
 func main() {
@@ -197,10 +212,6 @@ func main() {
 	defer c.end()
 
 	if err = c.connect(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err = c.setup(); err != nil {
 		log.Fatal(err)
 	}
 
