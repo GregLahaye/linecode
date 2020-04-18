@@ -5,18 +5,6 @@ import (
 )
 
 const ESC = "\x1B"
-const DEFAULT = "9"
-
-const (
-	Black   = "0"
-	Red     = "1"
-	Green   = "2"
-	Yellow  = "3"
-	Blue    = "4"
-	Magenta = "5"
-	Cyan    = "6"
-	White   = "7"
-)
 
 func SetBold() {
 	fmt.Printf("%s[1m", ESC)
@@ -34,16 +22,20 @@ func Bright(color string) string {
 	return fmt.Sprintf("%s;1", color)
 }
 
-func TwoFiftySix(color string) string {
-	return fmt.Sprintf("8;5;%s", color)
+func Foreground(color string) string {
+	return fmt.Sprintf("%s[38;5;%sm", ESC, color)
 }
 
-func Foreground(color string) string {
-	return fmt.Sprintf("%s[3%sm", ESC, color)
+func ForegroundReset() string {
+	return fmt.Sprintf("%s[39m", ESC)
 }
 
 func Background(color string) string {
-	return fmt.Sprintf("%s[4%sm", ESC, color)
+	return fmt.Sprintf("%s[48;5;%sm", ESC, color)
+}
+
+func BackgroundReset() string {
+	return fmt.Sprintf("%s[49m", ESC)
 }
 
 func SetCursor(line, col int) {
