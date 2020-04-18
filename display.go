@@ -70,6 +70,16 @@ func (u *User) ShowQuestion(slug string) error {
 		s += l.LangSlug + "   "
 	}
 
+	s += Foreground(Bright(Blue)) + "\n\n● "
+	for i, t := range q.TopicTags {
+		s += t.Slug
+		if i < len(q.TopicTags)-1 {
+			s += ", "
+		}
+	}
+
+	s += Foreground(DEFAULT) + "\n\n" + q.Difficulty
+
 	s += "\n\nSample Test Case: " + strconv.Quote(q.SampleTestCase)
 
 	s += "\n\n\n" + ParseHTML(q.Content)

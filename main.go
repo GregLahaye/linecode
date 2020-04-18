@@ -52,6 +52,16 @@ func main() {
 			PrettyPrint(submission)
 		}
 	default:
-		fmt.Println("Invalid option")
+		Test()
+		//fmt.Println("Invalid option")
+	}
+}
+
+func Test() {
+	fmt.Println(Background(Bright(Black)))
+	for i := 0; i < 255; i++ {
+		s := strconv.Itoa(i)
+		fmt.Print(Foreground(TwoFiftySix(s)))
+		fmt.Print(PadString(s, 4, true))
 	}
 }
