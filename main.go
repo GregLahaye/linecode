@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 func main() {
@@ -32,16 +31,9 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			submission, err := u.VerifyResult(result.InterpretID)
+			submission, err := u.Retry(result.InterpretID)
 			if err != nil {
 				log.Fatal(err)
-			}
-			for submission.State != "SUCCESS" {
-				time.Sleep(time.Second * 1)
-				submission, err = u.VerifyResult(result.InterpretID)
-				if err != nil {
-					log.Fatal(err)
-				}
 			}
 			PrettyPrint(submission)
 		}
@@ -53,16 +45,9 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			submission, err := u.VerifyResult(strconv.Itoa(result.SubmissionID))
+			submission, err := u.Retry(strconv.Itoa(result.SubmissionID))
 			if err != nil {
 				log.Fatal(err)
-			}
-			for submission.State != "SUCCESS" {
-				time.Sleep(time.Second * 1)
-				submission, err = u.VerifyResult(strconv.Itoa(result.SubmissionID))
-				if err != nil {
-					log.Fatal(err)
-				}
 			}
 			PrettyPrint(submission)
 		}

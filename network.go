@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type User struct {
@@ -148,6 +149,22 @@ type Submission struct {
 	SubmissionID      string          `json:"submission_id"`
 	StatusMsg         string          `json:"status_msg"`
 	State             string          `json:"state"`
+}
+
+func (u *User) Retry(id string) (Submission, error) {
+	submission, err := u.VerifyResult(id)
+	if err != nil {
+		return Submission{}, err
+	}
+	for submission.State != "SUCCESS" {
+		time.Sleep(time.Second * 1)
+		submission, err = u.VerifyResult(id)
+		if err != nil {
+			return Submission{}, err
+		}
+	}
+
+	return submission, nil
 }
 
 func ReadFile(filename string) ([]byte, error) {
