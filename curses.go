@@ -5,37 +5,15 @@ import (
 )
 
 const ESC = "\x1B"
-
-func SetBold() {
-	fmt.Printf("%s[1m", ESC)
-}
-
-func SetUnderline() {
-	fmt.Printf("%s[4m", ESC)
-}
-
-func SetBlink() {
-	fmt.Printf("%s[5m", ESC)
-}
-
-func Bright(color string) string {
-	return fmt.Sprintf("%s;1", color)
-}
+const ForegroundReset = ESC + "[39m"
+const BackgroundReset = ESC + "[49m"
 
 func Foreground(color string) string {
 	return fmt.Sprintf("%s[38;5;%sm", ESC, color)
 }
 
-func ForegroundReset() string {
-	return fmt.Sprintf("%s[39m", ESC)
-}
-
 func Background(color string) string {
 	return fmt.Sprintf("%s[48;5;%sm", ESC, color)
-}
-
-func BackgroundReset() string {
-	return fmt.Sprintf("%s[49m", ESC)
 }
 
 func SetCursor(line, col int) {
@@ -56,16 +34,4 @@ func CursorForward(value int) {
 
 func CursorBackward(value int) {
 	fmt.Printf("%s[%dD", ESC, value)
-}
-
-func ClearScreen() {
-	fmt.Printf("%s[2J", ESC)
-}
-
-func ClearLine() {
-	fmt.Printf("%s[K", ESC)
-}
-
-func ResetCursor() {
-	fmt.Printf("%s[00H", ESC)
 }

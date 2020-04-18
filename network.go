@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -167,8 +168,12 @@ func (u *User) Retry(id string) (Submission, error) {
 	return submission, nil
 }
 
-func ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
+func ReadFile(filename string) (string, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 func (u *User) Request(method, url string, body dict) (*http.Response, error) {
@@ -195,46 +200,72 @@ func (u *User) Request(method, url string, body dict) (*http.Response, error) {
 	return client.Do(req)
 }
 
-func (u *User) SubmitCode(id int, slug, lang, code string) (SubmissionResult, error) {
+func (u *User) SubmitCode(id int, lang, filename string) (Submission, error) {
+	slug, err := u.GetSlug(id)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	s := Start(Simple)
+	defer s.End()
+
+	code, err := ReadFile(filename)
+	if err != nil {
+		return Submission{}, err
+	}
+
 	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/submit/", data)
 	if err != nil {
-		return SubmissionResult{}, err
+		return Submission{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return SubmissionResult{}, err
+		return Submission{}, err
 	}
 
 	result := SubmissionResult{}
 	if err = json.Unmarshal(body, &result); err != nil {
-		return SubmissionResult{}, err
+		return Submission{}, err
 	}
 
-	return result, nil
+	return u.Retry(strconv.Itoa(result.SubmissionID))
 }
 
-func (u *User) TestCode(id int, slug, lang, code string) (RunResult, error) {
+func (u *User) RunCode(id int, lang, filename string) (Submission, error) {
+	slug, err := u.GetSlug(id)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	s := Start(Simple)
+	defer s.End()
+
+	code, err := ReadFile(filename)
+	if err != nil {
+		return Submission{}, err
+	}
+
 	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
 	if err != nil {
-		return RunResult{}, err
+		return Submission{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return RunResult{}, err
+		return Submission{}, err
 	}
 
 	result := RunResult{}
 	if err = json.Unmarshal(body, &result); err != nil {
-		return RunResult{}, err
+		return Submission{}, err
 	}
 
-	return result, nil
+	return u.Retry(result.InterpretID)
 }
 
 func (u *User) VerifyResult(id string) (Submission, error) {
@@ -257,7 +288,30 @@ func (u *User) VerifyResult(id string) (Submission, error) {
 	return result, nil
 }
 
-func (u *User) GetQuestion(slug string) (Question, error) {
+func (u *User) GetSlug(id int) (string, error) {
+	problems, err := u.GetProblems()
+	if err != nil {
+		return "", err
+	}
+
+	for _, p := range problems.Problems {
+		if p.Stat.ID == id {
+			return p.Stat.TitleSlug, nil
+		}
+	}
+
+	return "", errors.New("slug not found")
+}
+
+func (u *User) GetQuestion(id int) (Question, error) {
+	slug, err := u.GetSlug(id)
+	if err != nil {
+		return Question{}, err
+	}
+
+	s := Start(Simple)
+	defer s.End()
+
 	data := dict{"variables": dict{"titleSlug": slug}, "operationName": "questionData", "query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    title\n    titleSlug\n    content\n    isPaidOnly\n    difficulty\n    isLiked\n    topicTags {\n      name\n      slug\n    }\n    codeSnippets {\n      lang\n      langSlug\n      code\n    }\n    stats\n    status\n    sampleTestCase\n    metaData\n  }\n}"}
 	resp, err := u.Request("POST", "https://leetcode.com/graphql", data)
 	if err != nil {
@@ -317,6 +371,9 @@ func parse(raw Data) (Question, error) {
 }
 
 func (u *User) GetProblems() (Problems, error) {
+	s := Start(Simple)
+	defer s.End()
+
 	resp, err := u.Request("GET", "https://leetcode.com/api/problems/algorithms/", nil)
 	if err != nil {
 		return Problems{}, err

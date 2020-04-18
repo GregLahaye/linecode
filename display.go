@@ -23,35 +23,36 @@ func (u *User) ListProblems() error {
 func DisplayProblem(p Problem) {
 	s := ""
 	if p.Starred {
-		s += "*"
+		s += Foreground(Yellow1) + "*" + ForegroundReset
 	} else {
 		s += " "
 	}
 
 	if p.PaidOnly {
-		s += "$"
+		s += Foreground(Yellow1) + "$" + ForegroundReset
 	} else {
 		s += " "
 	}
 
 	if p.Status == "ac" {
-		s += "#"
+		s += Foreground(Green) + "#" + ForegroundReset
 	} else {
 		s += " "
 	}
 
-	s += " [" + PadString(strconv.Itoa(p.Stat.ID), 4, true) + "] "
+	s += "[" + PadString(strconv.Itoa(p.Stat.ID), 4, true) + "] "
 
-	s += PadString(p.Stat.Title, 80, false) + " "
+	s += PadString(p.Stat.TitleSlug, 80, false) + " "
 
 	switch p.Difficulty.Level {
 	case 1:
-		s += "Easy   "
+		s += Foreground(Lime) + "Easy   "
 	case 2:
-		s += "Medium "
+		s += Foreground(DarkOrange) + "Medium "
 	case 3:
-		s += "Hard   "
+		s += Foreground(Red1) + "Hard   "
 	}
+	s += ForegroundReset
 
 	f := (float64(p.Stat.TotalAccepted) / float64(p.Stat.TotalSubmitted)) * 100
 	s += "(" + strconv.FormatFloat(f, 'f', 2, 64) + "%)"
@@ -59,18 +60,19 @@ func DisplayProblem(p Problem) {
 	fmt.Println(s)
 }
 
-func (u *User) ShowQuestion(slug string) error {
-	q, err := u.GetQuestion(slug)
+func (u *User) ShowQuestion(id int) error {
+	q, err := u.GetQuestion(id)
 	if err != nil {
 		return err
 	}
 
 	s := ""
 	for _, l := range q.CodeSnippets {
-		s += l.LangSlug + "   "
+		s += Background(DarkOrange) + Foreground(Black) + " " + l.LangSlug + " " + BackgroundReset + " "
 	}
+	s += ForegroundReset
 
-	s += "\n\n● "
+	s += "\n\n ● Tags: "
 	for i, t := range q.TopicTags {
 		s += t.Slug
 		if i < len(q.TopicTags)-1 {
@@ -78,11 +80,20 @@ func (u *User) ShowQuestion(slug string) error {
 		}
 	}
 
-	s += "\n\n" + q.Difficulty
+	s += "\n ● Difficulty: "
+	switch q.Difficulty {
+	case "Easy":
+		s += Foreground(Lime)
+	case "Medium":
+		s += Foreground(DarkOrange)
+	case "Hard":
+		s += Foreground(Red1)
+	}
+	s += q.Difficulty + ForegroundReset
 
-	s += "\n\nSample Test Case: " + strconv.Quote(q.SampleTestCase)
+	s += "\n ● Sample Test Case: " + strconv.Quote(q.SampleTestCase)
 
-	s += "\n\n\n" + ParseHTML(q.Content)
+	s += "\n\n\nDescription: \n" + ParseHTML(q.Content)
 
 	fmt.Println(s)
 
