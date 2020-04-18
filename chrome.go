@@ -49,7 +49,7 @@ var TokensNotFound = errors.New("could not find tokens")
 
 type dict map[string]interface{}
 
-func Login(u *User) error {
+func (u *User) Login() error {
 	c, err := start()
 	if err != nil {
 		return err

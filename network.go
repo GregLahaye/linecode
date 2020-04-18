@@ -5,11 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
-	"time"
 )
 
 type User struct {
@@ -18,36 +15,37 @@ type User struct {
 }
 
 type Problems struct {
-	UserName        string    `json:"user_name"`
-	NumSolved       int       `json:"num_solved"`
-	NumTotal        int       `json:"num_total"`
-	AcEasy          int       `json:"ac_easy"`
-	AcMedium        int       `json:"ac_medium"`
-	AcHard          int       `json:"ac_hard"`
-	StatStatusPairs []Problem `json:"stat_status_pairs"`
+	Username        string    `json:"user_name"`
+	Solved       int       `json:"num_solved"`
+	Total        int       `json:"num_total"`
+	AcceptedEasy          int       `json:"ac_easy"`
+	AcceptedMedium        int       `json:"ac_medium"`
+	AcceptedHard          int       `json:"ac_hard"`
+	Problems []Problem `json:"stat_status_pairs"`
 	FrequencyHigh   int       `json:"frequency_high"`
 	FrequencyMid    int       `json:"frequency_mid"`
-	CategorySlug    string    `json:"category_slug"`
+	Category    string    `json:"category_slug"`
 }
 
 type Problem struct {
 	Stat struct {
-		QuestionID          int    `json:"question_id"`
-		QuestionArticleLive bool   `json:"question__article__live"`
-		QuestionArticleSlug string `json:"question__article__slug"`
-		QuestionTitle       string `json:"question__title"`
-		QuestionTitleSlug   string `json:"question__title_slug"`
-		QuestionHide        bool   `json:"question__hide"`
-		TotalAcs            int    `json:"total_acs"`
+		ID          int    `json:"question_id"`
+		Live bool   `json:"question__article__live"`
+		ArticleSlug string `json:"question__article__slug"`
+		Title       string `json:"question__title"`
+		TitleSlug   string `json:"question__title_slug"`
+		Hidden        bool   `json:"question__hide"`
+		TotalAccepted            int    `json:"total_acs"`
 		TotalSubmitted      int    `json:"total_submitted"`
-		FrontendQuestionID  int    `json:"frontend_question_id"`
-		IsNewQuestion       bool   `json:"is_new_question"`
+		DisplayID  int    `json:"frontend_question_id"`
+		IsNew       bool   `json:"is_new_question"`
 	} `json:"stat"`
+	Status string `json:"status"`
 	Difficulty struct {
 		Level int `json:"level"`
 	} `json:"difficulty"`
 	PaidOnly  bool `json:"paid_only"`
-	IsFavor   bool `json:"is_favor"`
+	Starred   bool `json:"is_favor"`
 	Frequency int  `json:"frequency"`
 	Progress  int  `json:"progress"`
 }
@@ -72,7 +70,7 @@ type Stats struct {
 	TotalSubmission    string `json:"totalSubmission"`
 	TotalAcceptedRaw   int    `json:"totalAcceptedRaw"`
 	TotalSubmissionRaw int    `json:"totalSubmissionRaw"`
-	AcRate             string `json:"acRate"`
+	AcceptanceRate             string `json:"acRate"`
 }
 
 type CodeDefinition []struct {
@@ -122,73 +120,6 @@ type Submission struct {
 	SubmissionID      string          `json:"submission_id"`
 	StatusMsg         string          `json:"status_msg"`
 	State             string          `json:"state"`
-}
-
-func main() {
-	u := User{}
-	if err := Login(&u); err != nil {
-		log.Fatal(err)
-	}
-
-	arg := os.Args[1]
-	switch arg {
-	case "list":
-		if problems, err := u.GetProblems(); err != nil {
-			log.Fatal(err)
-		} else {
-			PrettyPrint(problems)
-		}
-	case "show":
-		if question, err := u.GetQuestion(os.Args[2]); err != nil {
-			log.Fatal(err)
-		} else {
-			PrettyPrint(question)
-		}
-	case "run":
-		if code, err := ReadFile(os.Args[4]); err != nil {
-			log.Fatal(err)
-		} else {
-			result, err := u.TestCode(1, os.Args[2], os.Args[3], string(code))
-			if err != nil {
-				log.Fatal(err)
-			}
-			submission, err := u.VerifyResult(result.InterpretID)
-			if err != nil {
-				log.Fatal(err)
-			}
-			for submission.State != "SUCCESS" {
-				time.Sleep(time.Second * 1)
-				submission, err = u.VerifyResult(result.InterpretID)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			PrettyPrint(submission)
-		}
-	case "submit":
-		if code, err := ReadFile(os.Args[4]); err != nil {
-			log.Fatal(err)
-		} else {
-			result, err := u.SubmitCode(1, os.Args[2], os.Args[3], string(code))
-			if err != nil {
-				log.Fatal(err)
-			}
-			submission, err := u.VerifyResult(strconv.Itoa(result.SubmissionID))
-			if err != nil {
-				log.Fatal(err)
-			}
-			for submission.State != "SUCCESS" {
-				time.Sleep(time.Second * 1)
-				submission, err = u.VerifyResult(strconv.Itoa(result.SubmissionID))
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			PrettyPrint(submission)
-		}
-	default:
-		fmt.Println("Invalid option")
-	}
 }
 
 func ReadFile(filename string) ([]byte, error) {
