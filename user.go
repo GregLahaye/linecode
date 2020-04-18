@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -101,81 +102,111 @@ type SubmissionResult struct {
 }
 
 type Submission struct {
-	StatusCode        int      `json:"status_code"`
-	Lang              string   `json:"lang"`
-	RunSuccess        bool     `json:"run_success"`
-	RuntimeError      string   `json:"runtime_error"`
-	FullRuntimeError  string   `json:"full_runtime_error"`
-	StatusRuntime     string   `json:"status_runtime"`
-	Memory            int      `json:"memory"`
-	CodeAnswer        []string `json:"code_answer"`
-	CodeOutput        []string `json:"code_output"`
-	ElapsedTime       int      `json:"elapsed_time"`
-	TaskFinishTime    int64    `json:"task_finish_time"`
-	TotalCorrect      int      `json:"total_correct"`
-	TotalTestcases    int      `json:"total_testcases"`
-	RuntimePercentile float64  `json:"runtime_percentile"`
-	StatusMemory      string   `json:"status_memory"`
-	MemoryPercentile  float64  `json:"memory_percentile"`
-	PrettyLang        string   `json:"pretty_lang"`
-	SubmissionID      string   `json:"submission_id"`
-	StatusMsg         string   `json:"status_msg"`
-	State             string   `json:"state"`
+	StatusCode        int             `json:"status_code"`
+	Lang              string          `json:"lang"`
+	RunSuccess        bool            `json:"run_success"`
+	RuntimeError      string          `json:"runtime_error"`
+	FullRuntimeError  string          `json:"full_runtime_error"`
+	StatusRuntime     string          `json:"status_runtime"`
+	Memory            int             `json:"memory"`
+	CodeAnswer        json.RawMessage `json:"code_answer"`
+	CodeOutput        json.RawMessage `json:"code_output"`
+	ElapsedTime       int             `json:"elapsed_time"`
+	TaskFinishTime    int64           `json:"task_finish_time"`
+	TotalCorrect      int             `json:"total_correct"`
+	TotalTestCases    int             `json:"total_testcases"`
+	RuntimePercentile float64         `json:"runtime_percentile"`
+	StatusMemory      string          `json:"status_memory"`
+	MemoryPercentile  float64         `json:"memory_percentile"`
+	PrettyLang        string          `json:"pretty_lang"`
+	SubmissionID      string          `json:"submission_id"`
+	StatusMsg         string          `json:"status_msg"`
+	State             string          `json:"state"`
 }
 
 func main() {
 	u := User{}
 	if err := Login(&u); err != nil {
 		log.Fatal(err)
-	} else {
-		// we need to get a new CSRF token after request
+	}
 
-		//problems, err := u.GetProblems()
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
-		//PrettyPrint(problems)
-
-		//q, err := u.GetQuestion("two-sum")
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
-
-		code, err := ioutil.ReadFile("two-sum.py")
-		if err != nil {
+	arg := os.Args[1]
+	switch arg {
+	case "list":
+		if problems, err := u.GetProblems(); err != nil {
 			log.Fatal(err)
+		} else {
+			PrettyPrint(problems)
 		}
-		//data := []byte(code)
-		//err = ioutil.WriteFile("two-sum.py", data, os.ModePerm)
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
-
-		v, _ := u.TestCode(1, "two-sum", "python3", string(code))
-		r, _ := u.VerifyResult(string(v.InterpretID))
-		for r.State != "SUCCESS" {
-			time.Sleep(time.Second * 1)
-			r, _ = u.VerifyResult(string(v.InterpretID))
+	case "show":
+		if question, err := u.GetQuestion(os.Args[2]); err != nil {
+			log.Fatal(err)
+		} else {
+			PrettyPrint(question)
 		}
-		PrettyPrint(r)
-
-		m, _ := u.SubmitCode(1, "two-sum", "python3", string(code))
-		r, _ = u.VerifyResult(strconv.Itoa(m.SubmissionID))
-		for r.State != "SUCCESS" {
-			time.Sleep(time.Second * 1)
-			r, _ = u.VerifyResult(strconv.Itoa(m.SubmissionID))
+	case "run":
+		if code, err := ReadFile(os.Args[4]); err != nil {
+			log.Fatal(err)
+		} else {
+			result, err := u.TestCode(1, os.Args[2], os.Args[3], string(code))
+			if err != nil {
+				log.Fatal(err)
+			}
+			submission, err := u.VerifyResult(result.InterpretID)
+			if err != nil {
+				log.Fatal(err)
+			}
+			for submission.State != "SUCCESS" {
+				time.Sleep(time.Second * 1)
+				submission, err = u.VerifyResult(result.InterpretID)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			PrettyPrint(submission)
 		}
-		PrettyPrint(r)
+	case "submit":
+		if code, err := ReadFile(os.Args[4]); err != nil {
+			log.Fatal(err)
+		} else {
+			result, err := u.SubmitCode(1, os.Args[2], os.Args[3], string(code))
+			if err != nil {
+				log.Fatal(err)
+			}
+			submission, err := u.VerifyResult(strconv.Itoa(result.SubmissionID))
+			if err != nil {
+				log.Fatal(err)
+			}
+			for submission.State != "SUCCESS" {
+				time.Sleep(time.Second * 1)
+				submission, err = u.VerifyResult(strconv.Itoa(result.SubmissionID))
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			PrettyPrint(submission)
+		}
+	default:
+		fmt.Println("Invalid option")
 	}
 }
 
-func (u *User) SubmitCode(id int, slug, lang, code string) (SubmissionResult, error) {
+func ReadFile(filename string) ([]byte, error) {
+	return ioutil.ReadFile(filename)
+}
+
+func (u *User) Request(method, url string, body dict) (*http.Response, error) {
 	client := &http.Client{}
 
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
-	b, _ := json.Marshal(data)
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
 
-	req, _ := http.NewRequest("POST", "https://leetcode.com/problems/"+slug+"/submit/", bytes.NewReader(b))
+	req, err := http.NewRequest(method, url, bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
 
 	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
 	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
@@ -185,73 +216,67 @@ func (u *User) SubmitCode(id int, slug, lang, code string) (SubmissionResult, er
 	req.Header.Set("Referer", "https://leetcode.com/")
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
+	return client.Do(req)
+}
+
+func (u *User) SubmitCode(id int, slug, lang, code string) (SubmissionResult, error) {
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
+	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/submit/", data)
 	if err != nil {
 		return SubmissionResult{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return SubmissionResult{}, err
+	}
 
-	v := SubmissionResult{}
-	json.Unmarshal(body, &v)
+	result := SubmissionResult{}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return SubmissionResult{}, err
+	}
 
-	return v, nil
+	return result, nil
 }
 
 func (u *User) TestCode(id int, slug, lang, code string) (RunResult, error) {
-	client := &http.Client{}
-
 	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
-	b, _ := json.Marshal(data)
-
-	req, _ := http.NewRequest("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", bytes.NewReader(b))
-
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
-
-	req.Header.Set("X-CSRFToken", u.CSRFToken)
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("Referer", "https://leetcode.com/")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
+	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
 	if err != nil {
 		return RunResult{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return RunResult{}, err
+	}
 
-	v := RunResult{}
-	json.Unmarshal(body, &v)
+	result := RunResult{}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return RunResult{}, err
+	}
 
-	return v, nil
+	return result, nil
 }
 
 func (u *User) VerifyResult(id string) (Submission, error) {
-	client := &http.Client{}
-
-	req, _ := http.NewRequest("GET", "https://leetcode.com/submissions/detail/"+id+"/check/", nil)
-
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
-
-	req.Header.Set("X-CSRFToken", u.CSRFToken)
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("Referer", "https://leetcode.com/")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
+	resp, err := u.Request("GET", "https://leetcode.com/submissions/detail/"+id+"/check/", nil)
 	if err != nil {
 		return Submission{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Submission{}, err
+	}
 
 	result := Submission{}
-	json.Unmarshal(body, &result)
+	if err = json.Unmarshal(body, &result); err != nil {
+		return Submission{}, err
+	}
 
 	return result, nil
 }
@@ -268,8 +293,6 @@ func (u *User) GetQuestion(slug string) (Question, error) {
 	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
 
 	req.Header.Set("X-CSRFToken", u.CSRFToken)
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("Referer", "https://leetcode.com/problems/"+slug+"/description/")
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
@@ -363,12 +386,10 @@ func (u *User) GetProblems() (Problems, error) {
 	return problems, nil
 }
 
-func PrettyPrint(v interface{}) error {
+func PrettyPrint(v interface{}) {
 	b, err := json.MarshalIndent(v, "", "  ")
 
 	if err == nil {
 		fmt.Println(string(b))
 	}
-
-	return err
 }
