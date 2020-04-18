@@ -21,10 +21,8 @@ func main() {
 			log.Fatal(err)
 		}
 	case "show":
-		if question, err := u.GetQuestion(os.Args[2]); err != nil {
+		if err := u.ShowQuestion(os.Args[2]); err != nil {
 			log.Fatal(err)
-		} else {
-			PrettyPrint(question)
 		}
 	case "run":
 		if code, err := ReadFile(os.Args[4]); err != nil {

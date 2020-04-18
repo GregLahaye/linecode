@@ -15,32 +15,32 @@ type User struct {
 }
 
 type Problems struct {
-	Username        string    `json:"user_name"`
-	Solved       int       `json:"num_solved"`
-	Total        int       `json:"num_total"`
-	AcceptedEasy          int       `json:"ac_easy"`
-	AcceptedMedium        int       `json:"ac_medium"`
-	AcceptedHard          int       `json:"ac_hard"`
-	Problems []Problem `json:"stat_status_pairs"`
-	FrequencyHigh   int       `json:"frequency_high"`
-	FrequencyMid    int       `json:"frequency_mid"`
-	Category    string    `json:"category_slug"`
+	Username       string    `json:"user_name"`
+	Solved         int       `json:"num_solved"`
+	Total          int       `json:"num_total"`
+	AcceptedEasy   int       `json:"ac_easy"`
+	AcceptedMedium int       `json:"ac_medium"`
+	AcceptedHard   int       `json:"ac_hard"`
+	Problems       []Problem `json:"stat_status_pairs"`
+	FrequencyHigh  int       `json:"frequency_high"`
+	FrequencyMid   int       `json:"frequency_mid"`
+	Category       string    `json:"category_slug"`
 }
 
 type Problem struct {
 	Stat struct {
-		ID          int    `json:"question_id"`
-		Live bool   `json:"question__article__live"`
-		ArticleSlug string `json:"question__article__slug"`
-		Title       string `json:"question__title"`
-		TitleSlug   string `json:"question__title_slug"`
-		Hidden        bool   `json:"question__hide"`
-		TotalAccepted            int    `json:"total_acs"`
-		TotalSubmitted      int    `json:"total_submitted"`
-		DisplayID  int    `json:"frontend_question_id"`
-		IsNew       bool   `json:"is_new_question"`
+		ID             int    `json:"question_id"`
+		Live           bool   `json:"question__article__live"`
+		ArticleSlug    string `json:"question__article__slug"`
+		Title          string `json:"question__title"`
+		TitleSlug      string `json:"question__title_slug"`
+		Hidden         bool   `json:"question__hide"`
+		TotalAccepted  int    `json:"total_acs"`
+		TotalSubmitted int    `json:"total_submitted"`
+		DisplayID      int    `json:"frontend_question_id"`
+		IsNew          bool   `json:"is_new_question"`
 	} `json:"stat"`
-	Status string `json:"status"`
+	Status     string `json:"status"`
 	Difficulty struct {
 		Level int `json:"level"`
 	} `json:"difficulty"`
@@ -50,19 +50,52 @@ type Problem struct {
 	Progress  int  `json:"progress"`
 }
 
-type Question struct {
-	Content        string         `json:"content"`
-	Stats          Stats          `json:"stats"`
-	CodeDefinition CodeDefinition `json:"codeDefinition"`
-	SampleTestCase string         `json:"sampleTestCase"`
-	EnableRunCode  bool           `json:"enableRunCode"`
-	MetaData       MetaData       `json:"metaData"`
+type Data struct {
+	Data struct {
+		Question RawQuestion `json:"question"`
+	} `json:"data"`
 }
 
 type RawQuestion struct {
-	Data struct {
-		Question map[string]json.RawMessage `json:"question"`
-	} `json:"data"`
+	QuestionID string `json:"questionId"`
+	Title      string `json:"title"`
+	TitleSlug  string `json:"titleSlug"`
+	Content    string `json:"content"`
+	IsPaidOnly bool   `json:"isPaidOnly"`
+	Difficulty string `json:"difficulty"`
+	TopicTags  []struct {
+		Name string `json:"name"`
+		Slug string `json:"slug"`
+	} `json:"topicTags"`
+	CodeSnippets   []CodeSnippet   `json:"codeSnippets"`
+	Stats          json.RawMessage `json:"stats"`
+	Status         string          `json:"status"`
+	SampleTestCase string          `json:"sampleTestCase"`
+	MetaData       json.RawMessage `json:"metaData"`
+}
+
+type Question struct {
+	QuestionID string `json:"questionId"`
+	Title      string `json:"title"`
+	TitleSlug  string `json:"titleSlug"`
+	Content    string `json:"content"`
+	IsPaidOnly bool   `json:"isPaidOnly"`
+	Difficulty string `json:"difficulty"`
+	TopicTags  []struct {
+		Name string `json:"name"`
+		Slug string `json:"slug"`
+	} `json:"topicTags"`
+	CodeSnippets   []CodeSnippet `json:"codeSnippets"`
+	Stats          Stats         `json:"stats"`
+	Status         string        `json:"status"`
+	SampleTestCase string        `json:"sampleTestCase"`
+	MetaData       MetaData      `json:"metaData"`
+}
+
+type CodeSnippet struct {
+	Lang     string `json:"lang"`
+	LangSlug string `json:"langSlug"`
+	Code     string `json:"code"`
 }
 
 type Stats struct {
@@ -70,14 +103,9 @@ type Stats struct {
 	TotalSubmission    string `json:"totalSubmission"`
 	TotalAcceptedRaw   int    `json:"totalAcceptedRaw"`
 	TotalSubmissionRaw int    `json:"totalSubmissionRaw"`
-	AcceptanceRate             string `json:"acRate"`
+	AcceptanceRate     string `json:"acRate"`
 }
 
-type CodeDefinition []struct {
-	Value       string `json:"value"`
-	Text        string `json:"text"`
-	DefaultCode string `json:"defaultCode"`
-}
 type MetaData struct {
 	Name   string `json:"name"`
 	Params []struct {
@@ -213,20 +241,8 @@ func (u *User) VerifyResult(id string) (Submission, error) {
 }
 
 func (u *User) GetQuestion(slug string) (Question, error) {
-	client := &http.Client{}
-
-	query := dict{"variables": dict{"titleSlug": slug}, "operationName": "getQuestionDetail", "query": "query getQuestionDetail($titleSlug: String!) { question(titleSlug: $titleSlug) { content stats codeDefinition sampleTestCase enableRunCode metaData translatedContent } }"}
-	b, _ := json.Marshal(query)
-
-	req, _ := http.NewRequest("POST", "https://leetcode.com/graphql", bytes.NewReader(b))
-
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
-
-	req.Header.Set("X-CSRFToken", u.CSRFToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
+	data := dict{"variables": dict{"titleSlug": slug}, "operationName": "questionData", "query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    title\n    titleSlug\n    content\n    isPaidOnly\n    difficulty\n    isLiked\n    topicTags {\n      name\n      slug\n    }\n    codeSnippets {\n      lang\n      langSlug\n      code\n    }\n    stats\n    status\n    sampleTestCase\n    metaData\n  }\n}"}
+	resp, err := u.Request("POST", "https://leetcode.com/graphql", data)
 	if err != nil {
 		return Question{}, err
 	}
@@ -237,12 +253,12 @@ func (u *User) GetQuestion(slug string) (Question, error) {
 		return Question{}, err
 	}
 
-	raw := RawQuestion{}
-	if err = json.Unmarshal(body, &raw); err != nil {
+	d := Data{}
+	if err = json.Unmarshal(body, &d); err != nil {
 		return Question{}, err
 	}
 
-	q, err := parseQuestion(raw)
+	q, err := parse(d)
 	if err != nil {
 		return Question{}, err
 	}
@@ -250,14 +266,10 @@ func (u *User) GetQuestion(slug string) (Question, error) {
 	return q, nil
 }
 
-func parseQuestion(raw RawQuestion) (Question, error) {
+func parse(raw Data) (Question, error) {
 	q := Question{}
 
-	if err := json.Unmarshal(raw.Data.Question["content"], &q.Content); err != nil {
-		return q, err
-	}
-
-	if v, err := strconv.Unquote(string(raw.Data.Question["stats"])); err != nil {
+	if v, err := strconv.Unquote(string(raw.Data.Question.Stats)); err != nil {
 		return q, err
 	} else {
 		if err = json.Unmarshal([]byte(v), &q.Stats); err != nil {
@@ -265,23 +277,7 @@ func parseQuestion(raw RawQuestion) (Question, error) {
 		}
 	}
 
-	if v, err := strconv.Unquote(string(raw.Data.Question["codeDefinition"])); err != nil {
-		return q, err
-	} else {
-		if err = json.Unmarshal([]byte(v), &q.CodeDefinition); err != nil {
-			return q, err
-		}
-	}
-
-	if err := json.Unmarshal(raw.Data.Question["sampleTestCase"], &q.SampleTestCase); err != nil {
-		return q, err
-	}
-
-	if err := json.Unmarshal(raw.Data.Question["enableRunCode"], &q.EnableRunCode); err != nil {
-		return q, err
-	}
-
-	if v, err := strconv.Unquote(string(raw.Data.Question["metaData"])); err != nil {
+	if v, err := strconv.Unquote(string(raw.Data.Question.MetaData)); err != nil {
 		return q, err
 	} else {
 		if err = json.Unmarshal([]byte(v), &q.MetaData); err != nil {
@@ -289,16 +285,22 @@ func parseQuestion(raw RawQuestion) (Question, error) {
 		}
 	}
 
+	q.QuestionID = raw.Data.Question.QuestionID
+	q.Title = raw.Data.Question.Title
+	q.TitleSlug = raw.Data.Question.TitleSlug
+	q.Content = raw.Data.Question.Content
+	q.IsPaidOnly = raw.Data.Question.IsPaidOnly
+	q.Difficulty = raw.Data.Question.Difficulty
+	q.TopicTags = raw.Data.Question.TopicTags
+	q.CodeSnippets = raw.Data.Question.CodeSnippets
+	q.Status = raw.Data.Question.Status
+	q.SampleTestCase = raw.Data.Question.SampleTestCase
+
 	return q, nil
 }
 
 func (u *User) GetProblems() (Problems, error) {
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://leetcode.com/api/problems/algorithms/", nil)
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
-
-	resp, err := client.Do(req)
+	resp, err := u.Request("GET", "https://leetcode.com/api/problems/algorithms/", nil)
 	if err != nil {
 		return Problems{}, err
 	}
