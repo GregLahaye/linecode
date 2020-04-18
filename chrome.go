@@ -47,7 +47,7 @@ type cookie struct {
 
 var TokensNotFound = errors.New("could not find tokens")
 
-type s map[string]interface{}
+type dict map[string]interface{}
 
 func Login(u *User) error {
 	c, err := start()
@@ -141,7 +141,7 @@ func readWebSocketURL(rd io.ReadCloser) (string, error) {
 }
 
 func (c *chrome) findSessionID() error {
-	if err := c.send("Target.setDiscoverTargets", s{"discover": true}); err != nil {
+	if err := c.send("Target.setDiscoverTargets", dict{"discover": true}); err != nil {
 		return err
 	}
 
@@ -165,7 +165,7 @@ func (c *chrome) findSessionID() error {
 		}
 	}
 
-	if err := c.send("Target.attachToTarget", s{"targetId": c.targetID}); err != nil {
+	if err := c.send("Target.attachToTarget", dict{"targetId": c.targetID}); err != nil {
 		return err
 	}
 
@@ -272,10 +272,10 @@ func (c *chrome) close() {
 
 func (c *chrome) send(method string, params interface{}) error {
 	c.messageID++
-	return websocket.JSON.Send(c.ws, s{"id": c.messageID, "method": method, "params": params})
+	return websocket.JSON.Send(c.ws, dict{"id": c.messageID, "method": method, "params": params})
 }
 
 func (c *chrome) sendToTarget(method string, params interface{}) error {
-	b, _ := json.Marshal(s{"id": c.messageID + 1, "method": method, "params": params})
-	return c.send("Target.sendMessageToTarget", s{"message": string(b), "sessionId": c.sessionID})
+	b, _ := json.Marshal(dict{"id": c.messageID + 1, "method": method, "params": params})
+	return c.send("Target.sendMessageToTarget", dict{"message": string(b), "sessionId": c.sessionID})
 }

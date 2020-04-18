@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type User struct {
@@ -90,31 +91,175 @@ type MetaData struct {
 	} `json:"return"`
 }
 
+type RunResult struct {
+	InterpretID string `json:"interpret_id"`
+	TestCase    string `json:"test_case"`
+}
+
+type SubmissionResult struct {
+	SubmissionID int `json:"submission_id"`
+}
+
+type Submission struct {
+	StatusCode        int      `json:"status_code"`
+	Lang              string   `json:"lang"`
+	RunSuccess        bool     `json:"run_success"`
+	RuntimeError      string   `json:"runtime_error"`
+	FullRuntimeError  string   `json:"full_runtime_error"`
+	StatusRuntime     string   `json:"status_runtime"`
+	Memory            int      `json:"memory"`
+	CodeAnswer        []string `json:"code_answer"`
+	CodeOutput        []string `json:"code_output"`
+	ElapsedTime       int      `json:"elapsed_time"`
+	TaskFinishTime    int64    `json:"task_finish_time"`
+	TotalCorrect      int      `json:"total_correct"`
+	TotalTestcases    int      `json:"total_testcases"`
+	RuntimePercentile float64  `json:"runtime_percentile"`
+	StatusMemory      string   `json:"status_memory"`
+	MemoryPercentile  float64  `json:"memory_percentile"`
+	PrettyLang        string   `json:"pretty_lang"`
+	SubmissionID      string   `json:"submission_id"`
+	StatusMsg         string   `json:"status_msg"`
+	State             string   `json:"state"`
+}
+
 func main() {
 	u := User{}
 	if err := Login(&u); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	} else {
 		// we need to get a new CSRF token after request
 
-		problems, err := u.GetProblems()
-		if err != nil {
-			log.Fatal(err)
-		}
-		PrettyPrint(problems)
+		//problems, err := u.GetProblems()
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//PrettyPrint(problems)
 
-		q, err := u.GetQuestion("two-sum")
+		//q, err := u.GetQuestion("two-sum")
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+
+		code, err := ioutil.ReadFile("two-sum.py")
 		if err != nil {
 			log.Fatal(err)
 		}
-		PrettyPrint(q)
+		//data := []byte(code)
+		//err = ioutil.WriteFile("two-sum.py", data, os.ModePerm)
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+
+		v, _ := u.TestCode(1, "two-sum", "python3", string(code))
+		r, _ := u.VerifyResult(string(v.InterpretID))
+		for r.State != "SUCCESS" {
+			time.Sleep(time.Second * 1)
+			r, _ = u.VerifyResult(string(v.InterpretID))
+		}
+		PrettyPrint(r)
+
+		m, _ := u.SubmitCode(1, "two-sum", "python3", string(code))
+		r, _ = u.VerifyResult(strconv.Itoa(m.SubmissionID))
+		for r.State != "SUCCESS" {
+			time.Sleep(time.Second * 1)
+			r, _ = u.VerifyResult(strconv.Itoa(m.SubmissionID))
+		}
+		PrettyPrint(r)
 	}
+}
+
+func (u *User) SubmitCode(id int, slug, lang, code string) (SubmissionResult, error) {
+	client := &http.Client{}
+
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
+	b, _ := json.Marshal(data)
+
+	req, _ := http.NewRequest("POST", "https://leetcode.com/problems/"+slug+"/submit/", bytes.NewReader(b))
+
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
+
+	req.Header.Set("X-CSRFToken", u.CSRFToken)
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Referer", "https://leetcode.com/")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return SubmissionResult{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	v := SubmissionResult{}
+	json.Unmarshal(body, &v)
+
+	return v, nil
+}
+
+func (u *User) TestCode(id int, slug, lang, code string) (RunResult, error) {
+	client := &http.Client{}
+
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
+	b, _ := json.Marshal(data)
+
+	req, _ := http.NewRequest("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", bytes.NewReader(b))
+
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
+
+	req.Header.Set("X-CSRFToken", u.CSRFToken)
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Referer", "https://leetcode.com/")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return RunResult{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	v := RunResult{}
+	json.Unmarshal(body, &v)
+
+	return v, nil
+}
+
+func (u *User) VerifyResult(id string) (Submission, error) {
+	client := &http.Client{}
+
+	req, _ := http.NewRequest("GET", "https://leetcode.com/submissions/detail/"+id+"/check/", nil)
+
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
+
+	req.Header.Set("X-CSRFToken", u.CSRFToken)
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Referer", "https://leetcode.com/")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return Submission{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	result := Submission{}
+	json.Unmarshal(body, &result)
+
+	return result, nil
 }
 
 func (u *User) GetQuestion(slug string) (Question, error) {
 	client := &http.Client{}
 
-	query := s{"variables": s{"titleSlug": slug}, "operationName": "getQuestionDetail", "query": "query getQuestionDetail($titleSlug: String!) { question(titleSlug: $titleSlug) { content stats codeDefinition sampleTestCase enableRunCode metaData translatedContent } }"}
+	query := dict{"variables": dict{"titleSlug": slug}, "operationName": "getQuestionDetail", "query": "query getQuestionDetail($titleSlug: String!) { question(titleSlug: $titleSlug) { content stats codeDefinition sampleTestCase enableRunCode metaData translatedContent } }"}
 	b, _ := json.Marshal(query)
 
 	req, _ := http.NewRequest("POST", "https://leetcode.com/graphql", bytes.NewReader(b))
