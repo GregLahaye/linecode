@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-const userDataFilename = "user.json"
+const userFilename = "user.json"
 
 func PrettyPrint(v interface{}) {
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -61,6 +61,37 @@ func ReadFile(filename string) (string, error) {
 		return "", err
 	}
 	return string(b), nil
+}
+
+func SaveStruct(filename string, v interface{}) error {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filename, b, os.ModePerm); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadStruct(filename string, v interface{}) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	if err = json.Unmarshal(b, v); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func GetChar() (r rune, err error) {

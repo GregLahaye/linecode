@@ -148,6 +148,8 @@ type Submission struct {
 	State             string          `json:"state"`
 }
 
+const problemsFilename = "problems.json"
+
 func (u *User) Request(method, url string, body dict) (*http.Response, error) {
 	client := &http.Client{}
 
@@ -203,7 +205,23 @@ func (u *User) GetSlug(id int) (string, error) {
 	return "", errors.New("slug not found")
 }
 
-func (u *User) GetProblems() (Problems, error) {
+func (u *User) GetProblems() (Problems, error){
+	var problems Problems
+	if err := LoadStruct(problemsFilename, &problems); err != nil {
+		problems, err = u.DownloadProblems()
+		if err != nil {
+			return Problems{}, err
+		}
+
+		if err = SaveStruct(problemsFilename, problems); err != nil {
+			return Problems{}, err
+		}
+	}
+
+	return problems, nil
+}
+
+func (u *User) DownloadProblems() (Problems, error) {
 	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
@@ -308,7 +326,7 @@ func (u *User) SubmitCode(id int, filename string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
+	data := dict{"lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/submit/", data)
 	if err != nil {
 		return Submission{}, err
