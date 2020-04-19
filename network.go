@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/GregLahaye/yoyo"
+	"github.com/GregLahaye/yoyo/styles"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -206,7 +208,7 @@ func (u *User) SubmitCode(id int, lang, filename string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	s := Start(Simple)
+	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
 	code, err := ReadFile(filename)
@@ -240,7 +242,7 @@ func (u *User) RunCode(id int, lang, filename string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	s := Start(Simple)
+	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
 	code, err := ReadFile(filename)
@@ -309,7 +311,7 @@ func (u *User) GetQuestion(id int) (Question, error) {
 		return Question{}, err
 	}
 
-	s := Start(Simple)
+	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
 	data := dict{"variables": dict{"titleSlug": slug}, "operationName": "questionData", "query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    title\n    titleSlug\n    content\n    isPaidOnly\n    difficulty\n    isLiked\n    topicTags {\n      name\n      slug\n    }\n    codeSnippets {\n      lang\n      langSlug\n      code\n    }\n    stats\n    status\n    sampleTestCase\n    metaData\n  }\n}"}
@@ -371,7 +373,7 @@ func parse(raw Data) (Question, error) {
 }
 
 func (u *User) GetProblems() (Problems, error) {
-	s := Start(Simple)
+	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
 	resp, err := u.Request("GET", "https://leetcode.com/api/problems/algorithms/", nil)

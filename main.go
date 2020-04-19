@@ -2,20 +2,21 @@ package main
 
 import (
 	"fmt"
+	"github.com/GregLahaye/yogurt"
+	"github.com/GregLahaye/yogurt/colors"
 	"log"
 	"os"
 	"strconv"
 )
 
 func main() {
-	defer fmt.Print(ForegroundReset, BackgroundReset)
+	defer fmt.Print(yogurt.ForegroundReset, yogurt.BackgroundReset)
 	u := User{}
 	if err := u.Login(); err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Print(Foreground(Grey78))
-	defer fmt.Println(ForegroundReset)
+	fmt.Print(yogurt.Foreground(colors.Grey78))
 
 	arg := os.Args[1]
 	switch arg {

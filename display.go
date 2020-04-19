@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/GregLahaye/yogurt"
+	"github.com/GregLahaye/yogurt/colors"
 	"golang.org/x/net/html"
 	"strconv"
 	"strings"
@@ -23,19 +25,19 @@ func (u *User) ListProblems() error {
 func DisplayProblem(p Problem) {
 	s := ""
 	if p.Starred {
-		s += Foreground(Yellow1) + "*" + ForegroundReset
+		s += yogurt.Foreground(colors.Yellow1) + "*" + yogurt.ForegroundReset
 	} else {
 		s += " "
 	}
 
 	if p.PaidOnly {
-		s += Foreground(Yellow1) + "$" + ForegroundReset
+		s += yogurt.Foreground(colors.Yellow1) + "$" + yogurt.ForegroundReset
 	} else {
 		s += " "
 	}
 
 	if p.Status == "ac" {
-		s += Foreground(Green) + "#" + ForegroundReset
+		s += yogurt.Foreground(colors.Green) + "#" + yogurt.ForegroundReset
 	} else {
 		s += " "
 	}
@@ -46,13 +48,13 @@ func DisplayProblem(p Problem) {
 
 	switch p.Difficulty.Level {
 	case 1:
-		s += Foreground(Lime) + "Easy   "
+		s += yogurt.Foreground(colors.Lime) + "Easy   "
 	case 2:
-		s += Foreground(DarkOrange) + "Medium "
+		s += yogurt.Foreground(colors.DarkOrange) + "Medium "
 	case 3:
-		s += Foreground(Red1) + "Hard   "
+		s += yogurt.Foreground(colors.Red1) + "Hard   "
 	}
-	s += ForegroundReset
+	s += yogurt.ForegroundReset
 
 	f := (float64(p.Stat.TotalAccepted) / float64(p.Stat.TotalSubmitted)) * 100
 	s += "(" + strconv.FormatFloat(f, 'f', 2, 64) + "%)"
@@ -68,9 +70,9 @@ func (u *User) ShowQuestion(id int) error {
 
 	s := ""
 	for _, l := range q.CodeSnippets {
-		s += Background(DarkOrange) + Foreground(Black) + " " + l.LangSlug + " " + BackgroundReset + " "
+		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " " + l.LangSlug + " " + yogurt.BackgroundReset + " "
 	}
-	s += ForegroundReset
+	s += yogurt.ForegroundReset
 
 	s += "\n\n ● Tags: "
 	for i, t := range q.TopicTags {
@@ -83,13 +85,13 @@ func (u *User) ShowQuestion(id int) error {
 	s += "\n ● Difficulty: "
 	switch q.Difficulty {
 	case "Easy":
-		s += Foreground(Lime)
+		s += yogurt.Foreground(colors.Lime)
 	case "Medium":
-		s += Foreground(DarkOrange)
+		s += yogurt.Foreground(colors.DarkOrange)
 	case "Hard":
-		s += Foreground(Red1)
+		s += yogurt.Foreground(colors.Red1)
 	}
-	s += q.Difficulty + ForegroundReset
+	s += q.Difficulty + yogurt.ForegroundReset
 
 	s += "\n ● Sample Test Case: " + strconv.Quote(q.SampleTestCase)
 
