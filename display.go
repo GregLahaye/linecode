@@ -5,6 +5,8 @@ import (
 	"github.com/GregLahaye/yogurt"
 	"github.com/GregLahaye/yogurt/colors"
 	"golang.org/x/net/html"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -62,7 +64,7 @@ func DisplayProblem(p Problem) {
 	fmt.Println(s)
 }
 
-func (u *User) ShowQuestion(id int) error {
+func (u *User) ShowQuestion(id int, lang string) error {
 	q, err := u.GetQuestion(id)
 	if err != nil {
 		return err
@@ -98,6 +100,27 @@ func (u *User) ShowQuestion(id int) error {
 	s += "\n\n\nDescription: \n" + ParseHTML(q.Content)
 
 	fmt.Println(s)
+
+	ext := LanguageToExtension(lang)
+	filename := q.QuestionID + "." + q.TitleSlug + "." + ext
+
+	if _, err = os.Stat(filename); err == nil {
+		if !Confirm(filename + " already exists. Overwrite (Y/N) ") {
+			return nil
+		}
+	}
+
+	var code string
+	for _, l := range q.CodeSnippets {
+		if l.LangSlug == lang {
+			code = l.Code
+		}
+	}
+
+	err = ioutil.WriteFile(filename, []byte(code), os.ModePerm)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

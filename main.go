@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func main() {
@@ -29,32 +30,37 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		lang := os.Args[3]
 
-		if err = u.ShowQuestion(id); err != nil {
+		if err = u.ShowQuestion(id, lang); err != nil {
 			log.Fatal(err)
 		}
 	case "run":
-		id, err := strconv.Atoi(os.Args[2])
+		filename := os.Args[2]
+		parts := strings.Split(filename, ".")
+		id, err := strconv.Atoi(parts[0])
 		if err != nil {
 			log.Fatal(err)
 		}
-		language := os.Args[3]
-		filename := os.Args[4]
+		ext := parts[len(parts)-1]
+		lang := ExtensionToLanguage(ext)
 
-		submission, err := u.RunCode(id, language, filename)
+		submission, err := u.RunCode(id, lang, filename)
 		if err != nil {
 			log.Fatal(err)
 		}
 		PrettyPrint(submission)
 	case "submit":
-		id, err := strconv.Atoi(os.Args[2])
+		filename := os.Args[2]
+		parts := strings.Split(filename, ".")
+		id, err := strconv.Atoi(parts[0])
 		if err != nil {
 			log.Fatal(err)
 		}
-		language := os.Args[3]
-		filename := os.Args[4]
+		ext := parts[len(parts)-1]
+		lang := ExtensionToLanguage(ext)
 
-		submission, err := u.SubmitCode(id, language, filename)
+		submission, err := u.SubmitCode(id, lang, filename)
 		if err != nil {
 			log.Fatal(err)
 		}
