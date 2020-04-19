@@ -35,7 +35,7 @@ func main() {
 		if err = u.DisplayQuestion(id); err != nil {
 			log.Fatal(err)
 		}
-	case "run":
+	case "test":
 		filename := os.Args[2]
 		parts := strings.Split(filename, ".")
 		id, err := strconv.Atoi(parts[0])
@@ -49,11 +49,11 @@ func main() {
 			log.Fatal(err)
 		}
 
-		submission, err := u.RunCode(id, filename, testcase)
+		submission, err := u.TestCode(id, filename, testcase)
 		if err != nil {
 			log.Fatal(err)
 		}
-		PrettyPrint(submission)
+		DisplaySubmission(submission)
 	case "submit":
 		filename := os.Args[2]
 		parts := strings.Split(filename, ".")
@@ -66,7 +66,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		PrettyPrint(submission)
+		submission.Judge = "large"
+		DisplaySubmission(submission)
 	default:
 		fmt.Println("Invalid option")
 	}

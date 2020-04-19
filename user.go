@@ -8,6 +8,8 @@ type User struct {
 	} `json:"credentials"`
 }
 
+const userFilename = "user.json"
+
 func LoadUser() (User, error) {
 	var u User
 	if err := LoadStruct(userFilename, &u); err != nil {

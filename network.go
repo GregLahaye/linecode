@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/GregLahaye/yoyo"
 	"github.com/GregLahaye/yoyo/styles"
 	"io/ioutil"
@@ -69,7 +70,6 @@ type RawQuestion struct {
 	Stats          json.RawMessage `json:"stats"`
 	Status         string          `json:"status"`
 	SampleTestCase string          `json:"sampleTestCase"`
-	MetaData       json.RawMessage `json:"metaData"`
 }
 
 type Question struct {
@@ -87,7 +87,6 @@ type Question struct {
 	Stats          Stats         `json:"stats"`
 	Status         string        `json:"status"`
 	SampleTestCase string        `json:"sampleTestCase"`
-	MetaData       MetaData      `json:"metaData"`
 }
 
 type CodeSnippet struct {
@@ -104,18 +103,6 @@ type Stats struct {
 	AcceptanceRate     string `json:"acRate"`
 }
 
-type MetaData struct {
-	Name   string `json:"name"`
-	Params []struct {
-		Name string `json:"name"`
-		Type string `json:"type"`
-	} `json:"params"`
-	Return struct {
-		Type string `json:"type"`
-		Size int    `json:"size"`
-	} `json:"return"`
-}
-
 type RunResult struct {
 	InterpretID string `json:"interpret_id"`
 	TestCase    string `json:"test_case"`
@@ -126,26 +113,26 @@ type SubmissionResult struct {
 }
 
 type Submission struct {
-	StatusCode        int             `json:"status_code"`
-	Lang              string          `json:"lang"`
-	RunSuccess        bool            `json:"run_success"`
-	RuntimeError      string          `json:"runtime_error"`
-	FullRuntimeError  string          `json:"full_runtime_error"`
-	StatusRuntime     string          `json:"status_runtime"`
-	Memory            int             `json:"memory"`
-	CodeAnswer        json.RawMessage `json:"code_answer"`
-	CodeOutput        json.RawMessage `json:"code_output"`
-	ElapsedTime       int             `json:"elapsed_time"`
-	TaskFinishTime    int64           `json:"task_finish_time"`
-	TotalCorrect      int             `json:"total_correct"`
-	TotalTestCases    int             `json:"total_testcases"`
-	RuntimePercentile float64         `json:"runtime_percentile"`
-	StatusMemory      string          `json:"status_memory"`
-	MemoryPercentile  float64         `json:"memory_percentile"`
-	PrettyLang        string          `json:"pretty_lang"`
-	SubmissionID      string          `json:"submission_id"`
-	StatusMsg         string          `json:"status_msg"`
-	State             string          `json:"state"`
+	State  string `json:"state"`
+	Status string `json:"status_msg"`
+	Judge  string
+
+	Runtime           int     `json:"elapsed_time"`
+	RuntimePercentile float64 `json:"runtime_percentile"`
+	Memory            string  `json:"status_memory"`
+	MemoryPercentile  float64 `json:"memory_percentile"`
+
+	Correct        bool            `json:"correct_answer"`
+	Answer         json.RawMessage `json:"code_answer"`
+	Output         json.RawMessage `json:"code_output"`
+	ExpectedAnswer json.RawMessage `json:"expected_code_answer"`
+	ExpectedOutput json.RawMessage `json:"expected_code_output"`
+
+	TotalCorrect   int `json:"total_correct"`
+	TotalTestcases int `json:"total_testcases"`
+
+	RuntimeError string `json:"full_runtime_error"`
+	CompileError string `json:"full_compile_error"`
 }
 
 const problemsFilename = "problems.json"
@@ -253,7 +240,7 @@ func (u *User) GetQuestion(id int) (Question, error) {
 	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
-	data := dict{"variables": dict{"titleSlug": slug}, "operationName": "questionData", "query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    title\n    titleSlug\n    content\n    isPaidOnly\n    difficulty\n    isLiked\n    topicTags {\n      name\n      slug\n    }\n    codeSnippets {\n      lang\n      langSlug\n      code\n    }\n    stats\n    status\n    sampleTestCase\n    metaData\n  }\n}"}
+	data := dict{"variables": dict{"titleSlug": slug}, "operationName": "questionData", "query": "query questionData($titleSlug: String!) {\n  question(titleSlug: $titleSlug) {\n    questionId\n    title\n    titleSlug\n    content\n    isPaidOnly\n    difficulty\n    isLiked\n    topicTags {\n      name\n      slug\n    }\n    codeSnippets {\n      lang\n      langSlug\n      code\n    }\n    stats\n    status\n    sampleTestCase\n    }\n}"}
 	resp, err := u.Request("POST", "https://leetcode.com/graphql", data)
 	if err != nil {
 		return Question{}, err
@@ -278,7 +265,7 @@ func (u *User) GetQuestion(id int) (Question, error) {
 	return q, nil
 }
 
-func (u *User) RunCode(id int, filename, testcase string) (Submission, error) {
+func (u *User) TestCode(id int, filename, testcase string) (Submission, error) {
 	slug, err := u.GetSlug(id)
 	if err != nil {
 		return Submission{}, err
@@ -292,7 +279,7 @@ func (u *User) RunCode(id int, filename, testcase string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	data := dict{"data_input": testcase, "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
+	data := dict{"lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code, "data_input": testcase}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
 	if err != nil {
 		return Submission{}, err
@@ -358,6 +345,8 @@ func (u *User) VerifyResult(id string) (Submission, error) {
 		return Submission{}, err
 	}
 
+	fmt.Println(string(body))
+
 	result := Submission{}
 	if err = json.Unmarshal(body, &result); err != nil {
 		return Submission{}, err
@@ -377,14 +366,6 @@ func parse(raw Data) (Question, error) {
 		}
 	}
 
-	if v, err := strconv.Unquote(string(raw.Data.Question.MetaData)); err != nil {
-		return q, err
-	} else {
-		if err = json.Unmarshal([]byte(v), &q.MetaData); err != nil {
-			return q, err
-		}
-	}
-
 	q.QuestionID = raw.Data.Question.QuestionID
 	q.Title = raw.Data.Question.Title
 	q.TitleSlug = raw.Data.Question.TitleSlug
@@ -395,6 +376,6 @@ func parse(raw Data) (Question, error) {
 	q.CodeSnippets = raw.Data.Question.CodeSnippets
 	q.Status = raw.Data.Question.Status
 	q.SampleTestCase = raw.Data.Question.SampleTestCase
-
+	PrettyPrint(q)
 	return q, nil
 }

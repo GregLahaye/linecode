@@ -8,10 +8,9 @@ import (
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 )
-
-const userFilename = "user.json"
 
 func PrettyPrint(v interface{}) {
 	b, err := json.MarshalIndent(v, "", "  ")
@@ -116,6 +115,8 @@ func MultilineInput() (string, error) {
 			return s, err
 		} else if i == "\n" || i == "\r\n" {
 			return s, nil
+		} else {
+			s += i
 		}
 	}
 }
@@ -136,4 +137,8 @@ func Confirm(prompt string) bool {
 			return false
 		}
 	}
+}
+
+func FloatToString(f float64) string {
+	return strconv.FormatFloat(f, 'f', 2, 64)
 }
