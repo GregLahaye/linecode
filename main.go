@@ -12,12 +12,20 @@ import (
 
 func main() {
 	defer fmt.Print(yogurt.ResetForeground, yogurt.ResetBackground)
-	u := User{}
-	if err := u.Login(); err != nil {
-		log.Fatal(err)
-	}
 
-	u.Language = SelectLanguage()
+	u, err := LoadUser()
+	if err != nil {
+		u = User{}
+		if err := u.Login(); err != nil {
+			log.Fatal(err)
+		}
+
+		u.Language = SelectLanguage()
+
+		if err = SaveUser(u); err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	fmt.Print(yogurt.Foreground(colors.Grey78))
 

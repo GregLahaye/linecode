@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/GregLahaye/yogurt"
 	"golang.org/x/crypto/ssh/terminal"
+	"io/ioutil"
 	"os"
 )
 
@@ -48,6 +50,8 @@ func Confirm(prompt string) bool {
 		}
 	}
 }
+
+const userDataFilename = "user.json"
 
 func GetChar() (r rune, err error) {
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
@@ -118,3 +122,34 @@ func SelectLanguage() Language {
 	return languages[i]
 }
 
+func SaveUser(u User) error {
+	b, err := json.MarshalIndent(u, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(userDataFilename, b, os.ModePerm); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func LoadUser() (User, error) {
+	f, err := os.Open(userDataFilename)
+	if err != nil {
+		return User{}, err
+	}
+
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return User{}, err
+	}
+
+	var u User
+	if err = json.Unmarshal(b, &u); err != nil {
+		return User{}, err
+	}
+
+	return u, nil
+}
