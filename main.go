@@ -43,7 +43,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-		submission, err := u.RunCode(id, filename)
+		fmt.Println("Please enter a testcase:")
+		testcase, err := MultilineInput()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		submission, err := u.RunCode(id, filename, testcase)
 		if err != nil {
 			log.Fatal(err)
 		}

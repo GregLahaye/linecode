@@ -105,7 +105,7 @@ func (u *User) DisplayQuestion(id int) error {
 
 	filename := q.QuestionID + "." + q.TitleSlug + "." + u.Language.Extension
 
-	if _, err = os.Stat(filename); err == os.ErrNotExist {
+	if _, err = os.Stat(filename); os.IsNotExist(err) {
 		var code string
 		for _, l := range q.CodeSnippets {
 			if l.LangSlug == u.Language.Slug {

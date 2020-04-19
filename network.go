@@ -205,7 +205,7 @@ func (u *User) GetSlug(id int) (string, error) {
 	return "", errors.New("slug not found")
 }
 
-func (u *User) GetProblems() (Problems, error){
+func (u *User) GetProblems() (Problems, error) {
 	var problems Problems
 	if err := LoadStruct(problemsFilename, &problems); err != nil {
 		problems, err = u.DownloadProblems()
@@ -278,7 +278,7 @@ func (u *User) GetQuestion(id int) (Question, error) {
 	return q, nil
 }
 
-func (u *User) RunCode(id int, filename string) (Submission, error) {
+func (u *User) RunCode(id int, filename, testcase string) (Submission, error) {
 	slug, err := u.GetSlug(id)
 	if err != nil {
 		return Submission{}, err
@@ -292,7 +292,7 @@ func (u *User) RunCode(id int, filename string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
+	data := dict{"data_input": testcase, "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
 	if err != nil {
 		return Submission{}, err

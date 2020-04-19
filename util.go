@@ -96,11 +96,9 @@ func LoadStruct(filename string, v interface{}) error {
 
 func GetChar() (r rune, err error) {
 	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
-
 	if err != nil {
 		return
 	}
-
 	defer terminal.Restore(int(os.Stdin.Fd()), oldState)
 
 	reader := bufio.NewReader(os.Stdin)
@@ -108,6 +106,18 @@ func GetChar() (r rune, err error) {
 	r, _, err = reader.ReadRune()
 
 	return
+}
+
+func MultilineInput() (string, error) {
+	s := ""
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		if i, err := reader.ReadString('\n'); err != nil {
+			return s, err
+		} else if i == "\n" || i == "\r\n" {
+			return s, nil
+		}
+	}
 }
 
 func Confirm(prompt string) bool {
