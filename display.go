@@ -27,19 +27,19 @@ func (u *User) ListProblems() error {
 func DisplayProblem(p Problem) {
 	s := ""
 	if p.Starred {
-		s += yogurt.Foreground(colors.Yellow1) + "*" + yogurt.ForegroundReset
+		s += yogurt.Foreground(colors.Yellow1) + "*" + yogurt.ResetForeground
 	} else {
 		s += " "
 	}
 
 	if p.PaidOnly {
-		s += yogurt.Foreground(colors.Yellow1) + "$" + yogurt.ForegroundReset
+		s += yogurt.Foreground(colors.Yellow1) + "$" + yogurt.ResetForeground
 	} else {
 		s += " "
 	}
 
 	if p.Status == "ac" {
-		s += yogurt.Foreground(colors.Green) + "#" + yogurt.ForegroundReset
+		s += yogurt.Foreground(colors.Green) + "#" + yogurt.ResetForeground
 	} else {
 		s += " "
 	}
@@ -56,7 +56,7 @@ func DisplayProblem(p Problem) {
 	case 3:
 		s += yogurt.Foreground(colors.Red1) + "Hard   "
 	}
-	s += yogurt.ForegroundReset
+	s += yogurt.ResetForeground
 
 	f := (float64(p.Stat.TotalAccepted) / float64(p.Stat.TotalSubmitted)) * 100
 	s += "(" + strconv.FormatFloat(f, 'f', 2, 64) + "%)"
@@ -64,7 +64,7 @@ func DisplayProblem(p Problem) {
 	fmt.Println(s)
 }
 
-func (u *User) ShowQuestion(id int, lang string) error {
+func (u *User) ShowQuestion(id int) error {
 	q, err := u.GetQuestion(id)
 	if err != nil {
 		return err
@@ -72,9 +72,9 @@ func (u *User) ShowQuestion(id int, lang string) error {
 
 	s := ""
 	for _, l := range q.CodeSnippets {
-		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " " + l.LangSlug + " " + yogurt.BackgroundReset + " "
+		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " " + l.LangSlug + " " + yogurt.ResetBackground + " "
 	}
-	s += yogurt.ForegroundReset
+	s += yogurt.ResetForeground
 
 	s += "\n\n ● Tags: "
 	for i, t := range q.TopicTags {
@@ -93,33 +93,32 @@ func (u *User) ShowQuestion(id int, lang string) error {
 	case "Hard":
 		s += yogurt.Foreground(colors.Red1)
 	}
-	s += q.Difficulty + yogurt.ForegroundReset
+	s += q.Difficulty + yogurt.ResetForeground
 
 	s += "\n ● Sample Test Case: " + strconv.Quote(q.SampleTestCase)
+
+	if q.Status == "ac" {
+		s += "\n ● " + yogurt.Background(colors.Lime) + yogurt.Foreground(colors.Black) + " Accepted " + yogurt.ResetBackground + yogurt.ResetForeground
+	}
 
 	s += "\n\n\nDescription: \n" + ParseHTML(q.Content)
 
 	fmt.Println(s)
 
-	ext := LanguageToExtension(lang)
-	filename := q.QuestionID + "." + q.TitleSlug + "." + ext
+	filename := q.QuestionID + "." + q.TitleSlug + "." + u.Language.Extension
 
-	if _, err = os.Stat(filename); err == nil {
-		if !Confirm(filename + " already exists. Overwrite (Y/N) ") {
-			return nil
+	if _, err = os.Stat(filename); err == os.ErrNotExist {
+		var code string
+		for _, l := range q.CodeSnippets {
+			if l.LangSlug == u.Language.Slug {
+				code = l.Code
+			}
 		}
-	}
 
-	var code string
-	for _, l := range q.CodeSnippets {
-		if l.LangSlug == lang {
-			code = l.Code
+		err = ioutil.WriteFile(filename, []byte(code), os.ModePerm)
+		if err != nil {
+			return err
 		}
-	}
-
-	err = ioutil.WriteFile(filename, []byte(code), os.ModePerm)
-	if err != nil {
-		return err
 	}
 
 	return nil

@@ -11,11 +11,13 @@ import (
 )
 
 func main() {
-	defer fmt.Print(yogurt.ForegroundReset, yogurt.BackgroundReset)
+	defer fmt.Print(yogurt.ResetForeground, yogurt.ResetBackground)
 	u := User{}
 	if err := u.Login(); err != nil {
 		log.Fatal(err)
 	}
+
+	u.Language = SelectLanguage()
 
 	fmt.Print(yogurt.Foreground(colors.Grey78))
 
@@ -30,9 +32,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		lang := os.Args[3]
 
-		if err = u.ShowQuestion(id, lang); err != nil {
+		if err = u.ShowQuestion(id); err != nil {
 			log.Fatal(err)
 		}
 	case "run":
@@ -42,10 +43,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		ext := parts[len(parts)-1]
-		lang := ExtensionToLanguage(ext)
 
-		submission, err := u.RunCode(id, lang, filename)
+		submission, err := u.RunCode(id, filename)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -57,10 +56,8 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		ext := parts[len(parts)-1]
-		lang := ExtensionToLanguage(ext)
 
-		submission, err := u.SubmitCode(id, lang, filename)
+		submission, err := u.SubmitCode(id, filename)
 		if err != nil {
 			log.Fatal(err)
 		}

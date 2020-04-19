@@ -74,8 +74,8 @@ func (u *User) Login() error {
 		return err
 	}
 
-	u.LeetCodeSession = LeetCodeSession
-	u.CSRFToken = CSRFToken
+	u.Credentials.LeetCodeSession = LeetCodeSession
+	u.Credentials.CSRFToken = CSRFToken
 
 	return nil
 }

@@ -14,8 +14,11 @@ import (
 )
 
 type User struct {
-	LeetCodeSession string
-	CSRFToken       string
+	Language Language
+	Credentials struct {
+		LeetCodeSession string
+		CSRFToken       string
+	}
 }
 
 type Problems struct {
@@ -191,10 +194,10 @@ func (u *User) Request(method, url string, body dict) (*http.Response, error) {
 		return nil, err
 	}
 
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.LeetCodeSession, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.Credentials.CSRFToken, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.Credentials.LeetCodeSession, Domain: ".leetcode.com"})
 
-	req.Header.Set("X-CSRFToken", u.CSRFToken)
+	req.Header.Set("X-CSRFToken", u.Credentials.CSRFToken)
 	req.Header.Set("X-Requested-With", "XMLHttpRequest")
 	req.Header.Set("Referer", "https://leetcode.com/")
 	req.Header.Set("Content-Type", "application/json")
@@ -202,7 +205,7 @@ func (u *User) Request(method, url string, body dict) (*http.Response, error) {
 	return client.Do(req)
 }
 
-func (u *User) SubmitCode(id int, lang, filename string) (Submission, error) {
+func (u *User) SubmitCode(id int, filename string) (Submission, error) {
 	slug, err := u.GetSlug(id)
 	if err != nil {
 		return Submission{}, err
@@ -216,7 +219,7 @@ func (u *User) SubmitCode(id int, lang, filename string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/submit/", data)
 	if err != nil {
 		return Submission{}, err
@@ -236,7 +239,7 @@ func (u *User) SubmitCode(id int, lang, filename string) (Submission, error) {
 	return u.Retry(strconv.Itoa(result.SubmissionID))
 }
 
-func (u *User) RunCode(id int, lang, filename string) (Submission, error) {
+func (u *User) RunCode(id int, filename string) (Submission, error) {
 	slug, err := u.GetSlug(id)
 	if err != nil {
 		return Submission{}, err
@@ -250,7 +253,7 @@ func (u *User) RunCode(id int, lang, filename string) (Submission, error) {
 		return Submission{}, err
 	}
 
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": lang, "question_id": id, "test_mode": false, "typed_code": code}
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
 	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
 	if err != nil {
 		return Submission{}, err
