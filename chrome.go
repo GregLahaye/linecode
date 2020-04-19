@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"github.com/GregLahaye/yoyo"
+	"github.com/GregLahaye/yoyo/styles"
 	"golang.org/x/net/websocket"
 	"io"
 	"os"
@@ -50,6 +52,9 @@ var TokensNotFound = errors.New("could not find tokens")
 type dict map[string]interface{}
 
 func (u *User) Login() error {
+	s := yoyo.Start(styles.Bounce)
+	defer s.End()
+
 	c, err := start()
 	if err != nil {
 		return err
@@ -60,13 +65,13 @@ func (u *User) Login() error {
 		return err
 	}
 
-	LeetCodeSession, CSRFToken, err := c.findTokens()
+	Session, CSRFToken, err := c.findTokens()
 	if err == TokensNotFound {
 		if err = c.waitForLogin(); err != nil {
 			return err
 		}
 
-		LeetCodeSession, CSRFToken, err = c.findTokens()
+		Session, CSRFToken, err = c.findTokens()
 		if err != nil {
 			return err
 		}
@@ -74,7 +79,7 @@ func (u *User) Login() error {
 		return err
 	}
 
-	u.Credentials.LeetCodeSession = LeetCodeSession
+	u.Credentials.Session = Session
 	u.Credentials.CSRFToken = CSRFToken
 
 	return nil
@@ -228,22 +233,22 @@ func (c *chrome) findTokens() (string, string, error) {
 		return "", "", err
 	}
 
-	var LeetCodeSession string
+	var Session string
 	var CSRFToken string
 
 	for _, ck := range cookies {
 		if ck.Name == "LEETCODE_SESSION" {
-			LeetCodeSession = ck.Value
+			Session = ck.Value
 		} else if ck.Name == "csrftoken" {
 			CSRFToken = ck.Value
 		}
 	}
 
-	if LeetCodeSession == "" || CSRFToken == "" {
+	if Session == "" || CSRFToken == "" {
 		return "", "", TokensNotFound
 	}
 
-	return LeetCodeSession, CSRFToken, nil
+	return Session, CSRFToken, nil
 }
 
 func (c *chrome) getCookies() ([]cookie, error) {

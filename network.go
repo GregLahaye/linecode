@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/GregLahaye/yoyo"
 	"github.com/GregLahaye/yoyo/styles"
 	"io/ioutil"
@@ -12,14 +11,6 @@ import (
 	"strconv"
 	"time"
 )
-
-type User struct {
-	Language Language
-	Credentials struct {
-		LeetCodeSession string
-		CSRFToken       string
-	}
-}
 
 type Problems struct {
 	Username       string    `json:"user_name"`
@@ -157,6 +148,30 @@ type Submission struct {
 	State             string          `json:"state"`
 }
 
+func (u *User) Request(method, url string, body dict) (*http.Response, error) {
+	client := &http.Client{}
+
+	b, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, url, bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.Credentials.CSRFToken, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.Credentials.Session, Domain: ".leetcode.com"})
+
+	req.Header.Set("X-CSRFToken", u.Credentials.CSRFToken)
+	req.Header.Set("X-Requested-With", "XMLHttpRequest")
+	req.Header.Set("Referer", "https://leetcode.com/")
+	req.Header.Set("Content-Type", "application/json")
+
+	return client.Do(req)
+}
+
 func (u *User) Retry(id string) (Submission, error) {
 	submission, err := u.VerifyResult(id)
 	if err != nil {
@@ -173,126 +188,6 @@ func (u *User) Retry(id string) (Submission, error) {
 	return submission, nil
 }
 
-func ReadFile(filename string) (string, error) {
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-func (u *User) Request(method, url string, body dict) (*http.Response, error) {
-	client := &http.Client{}
-
-	b, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(method, url, bytes.NewReader(b))
-	if err != nil {
-		return nil, err
-	}
-
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: u.Credentials.CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: u.Credentials.LeetCodeSession, Domain: ".leetcode.com"})
-
-	req.Header.Set("X-CSRFToken", u.Credentials.CSRFToken)
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("Referer", "https://leetcode.com/")
-	req.Header.Set("Content-Type", "application/json")
-
-	return client.Do(req)
-}
-
-func (u *User) SubmitCode(id int, filename string) (Submission, error) {
-	slug, err := u.GetSlug(id)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	s := yoyo.Start(styles.Simple)
-	defer s.End()
-
-	code, err := ReadFile(filename)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
-	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/submit/", data)
-	if err != nil {
-		return Submission{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	result := SubmissionResult{}
-	if err = json.Unmarshal(body, &result); err != nil {
-		return Submission{}, err
-	}
-
-	return u.Retry(strconv.Itoa(result.SubmissionID))
-}
-
-func (u *User) RunCode(id int, filename string) (Submission, error) {
-	slug, err := u.GetSlug(id)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	s := yoyo.Start(styles.Simple)
-	defer s.End()
-
-	code, err := ReadFile(filename)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
-	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
-	if err != nil {
-		return Submission{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	result := RunResult{}
-	if err = json.Unmarshal(body, &result); err != nil {
-		return Submission{}, err
-	}
-
-	return u.Retry(result.InterpretID)
-}
-
-func (u *User) VerifyResult(id string) (Submission, error) {
-	resp, err := u.Request("GET", "https://leetcode.com/submissions/detail/"+id+"/check/", nil)
-	if err != nil {
-		return Submission{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return Submission{}, err
-	}
-
-	result := Submission{}
-	if err = json.Unmarshal(body, &result); err != nil {
-		return Submission{}, err
-	}
-
-	return result, nil
-}
-
 func (u *User) GetSlug(id int) (string, error) {
 	problems, err := u.GetProblems()
 	if err != nil {
@@ -306,6 +201,29 @@ func (u *User) GetSlug(id int) (string, error) {
 	}
 
 	return "", errors.New("slug not found")
+}
+
+func (u *User) GetProblems() (Problems, error) {
+	s := yoyo.Start(styles.Simple)
+	defer s.End()
+
+	resp, err := u.Request("GET", "https://leetcode.com/api/problems/algorithms/", nil)
+	if err != nil {
+		return Problems{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Problems{}, err
+	}
+
+	problems := Problems{}
+	if err = json.Unmarshal(body, &problems); err != nil {
+		return Problems{}, err
+	}
+
+	return problems, nil
 }
 
 func (u *User) GetQuestion(id int) (Question, error) {
@@ -342,6 +260,94 @@ func (u *User) GetQuestion(id int) (Question, error) {
 	return q, nil
 }
 
+func (u *User) RunCode(id int, filename string) (Submission, error) {
+	slug, err := u.GetSlug(id)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	s := yoyo.Start(styles.Simple)
+	defer s.End()
+
+	code, err := ReadFile(filename)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
+	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/interpret_solution/", data)
+	if err != nil {
+		return Submission{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	result := RunResult{}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return Submission{}, err
+	}
+
+	return u.Retry(result.InterpretID)
+}
+
+func (u *User) SubmitCode(id int, filename string) (Submission, error) {
+	slug, err := u.GetSlug(id)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	s := yoyo.Start(styles.Simple)
+	defer s.End()
+
+	code, err := ReadFile(filename)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	data := dict{"data_input": "[2, 7, 11, 15]\n9", "lang": u.Language.Slug, "question_id": id, "test_mode": false, "typed_code": code}
+	resp, err := u.Request("POST", "https://leetcode.com/problems/"+slug+"/submit/", data)
+	if err != nil {
+		return Submission{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	result := SubmissionResult{}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return Submission{}, err
+	}
+
+	return u.Retry(strconv.Itoa(result.SubmissionID))
+}
+
+func (u *User) VerifyResult(id string) (Submission, error) {
+	resp, err := u.Request("GET", "https://leetcode.com/submissions/detail/"+id+"/check/", nil)
+	if err != nil {
+		return Submission{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Submission{}, err
+	}
+
+	result := Submission{}
+	if err = json.Unmarshal(body, &result); err != nil {
+		return Submission{}, err
+	}
+
+	return result, nil
+}
+
 func parse(raw Data) (Question, error) {
 	q := Question{}
 
@@ -373,35 +379,4 @@ func parse(raw Data) (Question, error) {
 	q.SampleTestCase = raw.Data.Question.SampleTestCase
 
 	return q, nil
-}
-
-func (u *User) GetProblems() (Problems, error) {
-	s := yoyo.Start(styles.Simple)
-	defer s.End()
-
-	resp, err := u.Request("GET", "https://leetcode.com/api/problems/algorithms/", nil)
-	if err != nil {
-		return Problems{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return Problems{}, err
-	}
-
-	problems := Problems{}
-	if err = json.Unmarshal(body, &problems); err != nil {
-		return Problems{}, err
-	}
-
-	return problems, nil
-}
-
-func PrettyPrint(v interface{}) {
-	b, err := json.MarshalIndent(v, "", "  ")
-
-	if err == nil {
-		fmt.Println(string(b))
-	}
 }

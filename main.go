@@ -15,16 +15,7 @@ func main() {
 
 	u, err := LoadUser()
 	if err != nil {
-		u = User{}
-		if err := u.Login(); err != nil {
-			log.Fatal(err)
-		}
-
-		u.Language = SelectLanguage()
-
-		if err = SaveUser(u); err != nil {
-			log.Fatal(err)
-		}
+		log.Fatal(err)
 	}
 
 	fmt.Print(yogurt.Foreground(colors.Grey78))
@@ -41,7 +32,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		if err = u.ShowQuestion(id); err != nil {
+		if err = u.DisplayQuestion(id); err != nil {
 			log.Fatal(err)
 		}
 	case "run":

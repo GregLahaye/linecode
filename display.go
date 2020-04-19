@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"github.com/GregLahaye/yogurt"
 	"github.com/GregLahaye/yogurt/colors"
-	"golang.org/x/net/html"
 	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
 )
 
 func (u *User) ListProblems() error {
@@ -64,7 +62,7 @@ func DisplayProblem(p Problem) {
 	fmt.Println(s)
 }
 
-func (u *User) ShowQuestion(id int) error {
+func (u *User) DisplayQuestion(id int) error {
 	q, err := u.GetQuestion(id)
 	if err != nil {
 		return err
@@ -122,38 +120,4 @@ func (u *User) ShowQuestion(id int) error {
 	}
 
 	return nil
-}
-
-func PadString(str string, max int, left bool) string {
-	length := len(str)
-	if length > max {
-		return str
-	}
-
-	difference := max - length
-	padding := strings.Repeat(" ", difference)
-	if left {
-		str = padding + str
-	} else {
-		str += padding
-	}
-
-	return str
-}
-
-func ParseHTML(h string) string {
-	z := html.NewTokenizer(strings.NewReader(h))
-
-	s := ""
-	for {
-		tt := z.Next()
-		t := z.Token()
-
-		switch tt {
-		case html.ErrorToken:
-			return s
-		case html.TextToken:
-			s += t.Data
-		}
-	}
 }
