@@ -308,3 +308,37 @@ func Filter(p Problem, f []rune) bool {
 
 	return true
 }
+
+func TagExists(slug string, tags Tags) bool {
+	for _, tag := range tags.Topics {
+		if tag.Slug == slug {
+			return true
+		}
+	}
+
+	return false
+}
+
+func HasAnyTag(p Problem, slugs []string, tags Tags) bool {
+	for _, slug := range slugs {
+		if HasTag(p, slug, tags) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func HasTag(p Problem, slug string, tags Tags) bool {
+	for _, tag := range tags.Topics {
+		if tag.Slug == slug {
+			for _, id := range tag.Questions {
+				if id == p.Stat.ID {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}

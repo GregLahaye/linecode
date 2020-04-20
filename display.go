@@ -27,7 +27,7 @@ func (u *User) ListTags() error {
 	return nil
 }
 
-func (u *User) ListProblems(filters []rune, tt []string) error {
+func (u *User) ListProblems(filters []rune, slugs []string) error {
 	problems, err := u.GetProblems()
 	if err != nil {
 		return err
@@ -38,28 +38,21 @@ func (u *User) ListProblems(filters []rune, tt []string) error {
 		return err
 	}
 
-	for _, problem := range problems.Problems {
-		var pass bool
-		if len(tt) > 0 {
-			for _, tag := range tags.Topics {
-				for _, t := range tt {
-					if t == tag.Slug {
-						for _, question := range tag.Questions {
-							if question == problem.Stat.ID {
-								pass = true
-							}
-						}
-					}
-				}
-			}
-		} else {
-			pass = true
-		}
-
-		if pass && Filter(problem, filters) {
-			DisplayProblem(problem)
+	s := "\n"
+	for i, slug := range slugs {
+		if !TagExists(slug, tags) {
+			s += "Tag '" + slug + "' does not exist\n"
+			slugs = append(slugs[:i], slugs[i+1:]...)
 		}
 	}
+
+	for _, p := range problems.Problems {
+		if Filter(p, filters) && (len(slugs) == 0 || HasAnyTag(p, slugs, tags)) {
+			DisplayProblem(p)
+		}
+	}
+
+	fmt.Print(s)
 
 	return nil
 }
