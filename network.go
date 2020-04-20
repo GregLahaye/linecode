@@ -280,9 +280,11 @@ func (u *User) GetQuestion(id int) (Question, error) {
 }
 
 func (u *User) TestCode(id int, filename, testcase string) (Submission, error) {
-	slug, err := u.GetSlug(id)
-	if err != nil {
-		return Submission{}, err
+	q, err := u.GetQuestion(id)
+	slug := q.TitleSlug
+	if testcase == "" {
+		testcase = q.SampleTestCase
+		fmt.Println(testcase)
 	}
 
 	s := yoyo.Start(styles.Simple)
@@ -358,8 +360,6 @@ func (u *User) VerifyResult(id string) (Submission, error) {
 	if err != nil {
 		return Submission{}, err
 	}
-
-	fmt.Println(string(body))
 
 	result := Submission{}
 	if err = json.Unmarshal(body, &result); err != nil {
