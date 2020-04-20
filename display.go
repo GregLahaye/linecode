@@ -102,7 +102,8 @@ func (u *User) DisplayQuestion(id int) error {
 		s += "\n ● " + yogurt.Background(colors.Lime) + yogurt.Foreground(colors.Black) + " Accepted " + yogurt.ResetBackground + yogurt.ResetForeground
 	}
 
-	s += "\n\n\nDescription: \n" + ParseHTML(q.Content)
+	content := ParseHTML(q.Content)
+	s += "\n\n\nDescription: \n" + content
 
 	fmt.Println(s)
 
@@ -116,7 +117,9 @@ func (u *User) DisplayQuestion(id int) error {
 			}
 		}
 
-		err = ioutil.WriteFile(filename, []byte(code), os.ModePerm)
+		c := u.Language.Comment.Start + "\n" + content + "\n" + u.Language.Comment.End + "\n\n\n" + code
+
+		err = ioutil.WriteFile(filename, []byte(c), os.ModePerm)
 		if err != nil {
 			return err
 		}

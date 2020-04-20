@@ -9,23 +9,142 @@ type Language struct {
 	Name      string
 	Slug      string
 	Extension string
+	Comment   Comment
+}
+
+type Comment struct {
+	Start string
+	End   string
 }
 
 var languages = []Language{
-	{Name: "C++", Slug: "cpp", Extension: "cpp"},
-	{Name: "Java", Slug: "java", Extension: "java"},
-	{Name: "Python", Slug: "python", Extension: "py"},
-	{Name: "Python3", Slug: "python3", Extension: "py"},
-	{Name: "C", Slug: "c", Extension: "c"},
-	{Name: "C#", Slug: "csharp", Extension: "cs"},
-	{Name: "JavaScript", Slug: "javascript", Extension: "js"},
-	{Name: "Ruby", Slug: "ruby", Extension: "rb"},
-	{Name: "Swift", Slug: "swift", Extension: "swift"},
-	{Name: "Go", Slug: "golang", Extension: "go"},
-	{Name: "Scala", Slug: "scala", Extension: "scala"},
-	{Name: "Kotlin", Slug: "kotlin", Extension: "kt"},
-	{Name: "Rust", Slug: "rust", Extension: "rs"},
-	{Name: "PHP", Slug: "php", Extension: "php"},
+	{
+		Name:      "C++",
+		Slug:      "cpp",
+		Extension: "cpp",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Java",
+		Slug:      "java",
+		Extension: "java",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Python",
+		Slug:      "python",
+		Extension: "py",
+		Comment: Comment{
+			Start: `"""`,
+			End:   `"""`,
+		},
+	},
+	{
+		Name:      "Python3",
+		Slug:      "python3",
+		Extension: "py",
+		Comment: Comment{
+			Start: `"""`,
+			End:   `"""`,
+		},
+	},
+
+	{
+		Name:      "C",
+		Slug:      "c",
+		Extension: "c",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "C#",
+		Slug:      "csharp",
+		Extension: "cs",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "JavaScript",
+		Slug:      "javascript",
+		Extension: "js",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Ruby",
+		Slug:      "ruby",
+		Extension: "rb",
+		Comment: Comment{
+			Start: `=begin`,
+			End: `=end	`,
+		},
+	},
+	{
+		Name:      "Swift",
+		Slug:      "swift",
+		Extension: "swift",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Go",
+		Slug:      "golang",
+		Extension: "go",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Scala",
+		Slug:      "scala",
+		Extension: "scala",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Kotlin",
+		Slug:      "kotlin",
+		Extension: "kt",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "Rust",
+		Slug:      "rust",
+		Extension: "rs",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
+	{
+		Name:      "PHP",
+		Slug:      "php",
+		Extension: "php",
+		Comment: Comment{
+			Start: `/*`,
+			End:   `*/`,
+		},
+	},
 }
 
 func SelectLanguage() Language {
