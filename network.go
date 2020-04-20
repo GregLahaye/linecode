@@ -150,7 +150,16 @@ type Favorites struct {
 	} `json:"favorites"`
 }
 
+type Tags struct {
+	Topics []struct {
+		Slug      string `json:"slug"`
+		Name      string `json:"name"`
+		Questions []int  `json:"questions"`
+	} `json:"topics"`
+}
+
 const problemsFilename = "problems.json"
+const tagsFilename = "tags.json"
 const questionsDirectory = "questions"
 
 func (u *User) Request(method, url string, body dict) (*http.Response, error) {
@@ -462,4 +471,44 @@ func (u *User) UnStar(id int) error {
 	defer resp.Body.Close()
 
 	return Destroy(problemsFilename)
+}
+
+func (u *User) GetTags() (Tags, error) {
+	var tags Tags
+
+	if err := Retrieve(tagsFilename, &tags); err != nil {
+		tags, err = u.DownloadTags()
+		if err != nil {
+			return tags, err
+		}
+
+		if err = Cache(tagsFilename, tags); err != nil {
+			return tags, err
+		}
+	}
+
+	return tags, nil
+}
+
+func (u *User) DownloadTags() (Tags, error) {
+	s := yoyo.Start(styles.Simple)
+	defer s.End()
+
+	resp, err := u.Request("GET", "https://leetcode.com/problems/api/tags/", nil)
+	if err != nil {
+		return Tags{}, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return Tags{}, err
+	}
+
+	tags := Tags{}
+	if err = json.Unmarshal(body, &tags); err != nil {
+		return Tags{}, err
+	}
+
+	return tags, nil
 }

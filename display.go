@@ -9,14 +9,36 @@ import (
 	"strconv"
 )
 
-func (u *User) ListProblems(filters []rune) error {
+func (u *User) ListProblems(filters []rune, tt []string) error {
 	problems, err := u.GetProblems()
 	if err != nil {
 		return err
 	}
 
+	tags, err := u.GetTags()
+	if err != nil {
+		return err
+	}
+
 	for _, problem := range problems.Problems {
-		if Filter(problem, filters) {
+		var pass bool
+		if len(tt) > 0 {
+			for _, tag := range tags.Topics {
+				for _, t := range tt {
+					if t == tag.Slug {
+						for _, question := range tag.Questions {
+							if question == problem.Stat.ID {
+								pass = true
+							}
+						}
+					}
+				}
+			}
+		} else {
+			pass = true
+		}
+
+		if pass && Filter(problem, filters) {
 			DisplayProblem(problem)
 		}
 	}

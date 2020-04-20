@@ -29,7 +29,7 @@ func main() {
 			r = []rune(s)
 		}
 
-		if err := u.ListProblems(r); err != nil {
+		if err := u.ListProblems(r, os.Args[3:]); err != nil {
 			log.Fatal(err)
 		}
 	case "show":
