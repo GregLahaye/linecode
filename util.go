@@ -139,6 +139,10 @@ func Confirm(prompt string) bool {
 	}
 }
 
+func IntToString(i int) string {
+	return strconv.Itoa(i)
+}
+
 func FloatToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', 2, 64)
 }

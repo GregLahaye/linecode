@@ -24,6 +24,7 @@ func (u *User) ListProblems() error {
 
 func DisplayProblem(p Problem) {
 	s := ""
+
 	if p.Starred {
 		s += yogurt.Foreground(colors.Yellow1) + "*" + yogurt.ResetForeground
 	} else {
@@ -101,6 +102,8 @@ func (u *User) DisplayQuestion(id int) error {
 
 	s += "\n\n\nDescription: \n" + ParseHTML(q.Content)
 
+	fmt.Println(s)
+
 	filename := q.QuestionID + "." + q.TitleSlug + "." + u.Language.Extension
 
 	if _, err = os.Stat(filename); os.IsNotExist(err) {
@@ -123,44 +126,72 @@ func (u *User) DisplayQuestion(id int) error {
 func DisplaySubmission(m Submission) {
 	s := ""
 
-	// because different judge types have different json keys, we need to do some checks to determine the actual status
-	// of the submission and the actual/expected answer/outputs
+	ok := m.Success
+	answer := string(m.Answer)
+	testcase := m.Input
+	if testcase == "" {
+		testcase = m.LastTestcase
+	}
+	passed := m.TotalCorrect
+	total := m.TotalTestcases
 
-	switch m.Status {
-	case "Accepted":
-		s += yogurt.Background(colors.Lime) + yogurt.Foreground(colors.Black) + " Accepted "
-		s += yogurt.ResetBackground + yogurt.ResetForeground
-
-		s += "\n ● Runtime: " + strconv.Itoa(m.Runtime) + " ms"
-		if m.RuntimePercentile > 0 {
-			s += ", faster than " + FloatToString(m.RuntimePercentile)
+	var expected string
+	var stdout string
+	if m.Judge == "large" {
+		answer = string(m.Output)
+		expected = string(m.ExpectedOutput)
+		stdout = string(m.StdOut)
+	} else {
+		stdout = string(m.Output)
+		expected = string(m.ExpectedAnswer)
+		if !m.Correct {
+			ok = false
 		}
+	}
 
-		s += "\n ● Memory: " + m.Memory + " ms"
-		if m.MemoryPercentile > 0 {
-			s += ", less than " + FloatToString(m.MemoryPercentile)
-		}
-	case "Wrong Answer":
-		s += yogurt.Background(colors.Red1) + yogurt.Foreground(colors.Black) + " Wrong Answer "
-		s += yogurt.ResetBackground + yogurt.ResetForeground
+	if passed != total {
+		ok = false
+	}
+	if m.Status != "Accepted" {
+		ok = false
+	}
 
-		s += "\nActual"
-		s += "\n Answer: " + string(m.Answer)
-		s += "\n Output: " + string(m.Output)
-
-		s += "\nExpected"
-		s += "\n Answer: " + string(m.ExpectedAnswer)
-		s += "\n Output: " + string(m.ExpectedOutput)
-	case "Runtime Error":
+	if m.Status == "Runtime Error" {
 		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " Runtime Error "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
 		s += "\n" + m.RuntimeError
-	case "Compile Error":
+	} else if m.Status == "Compile Error" {
 		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " Compile Error "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
 		s += "\n" + m.CompileError
-	default:
-		s += "Unknown submission status"
+	} else if ok {
+		s += yogurt.Background(colors.Lime) + yogurt.Foreground(colors.Black) + " Accepted "
+		s += yogurt.ResetBackground + yogurt.ResetForeground
+
+		s += "\n ● Runtime: " + m.Runtime
+		if m.RuntimePercentile > 0 {
+			s += ", faster than " + FloatToString(m.RuntimePercentile) + "%"
+		}
+
+		s += "\n ● Memory: " + m.Memory
+		if m.MemoryPercentile > 0 {
+			s += ", less than " + FloatToString(m.MemoryPercentile) + "%"
+		}
+	} else {
+		s += yogurt.Background(colors.Red1) + yogurt.Foreground(colors.Black) + " Wrong Answer "
+		s += yogurt.ResetBackground + yogurt.ResetForeground
+
+		if total > 0 {
+			s += "\nPassed " + IntToString(passed) + " / " + IntToString(total) + " test cases"
+		}
+
+		if testcase != "" {
+			s += "\nTestcase: \n" + testcase
+		}
+
+		s += "\n stdout: " + stdout
+		s += "\n Output: " + answer
+		s += "\n Expected: " + expected
 	}
 
 	fmt.Println(s)

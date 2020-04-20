@@ -113,20 +113,25 @@ type SubmissionResult struct {
 }
 
 type Submission struct {
-	State  string `json:"state"`
-	Status string `json:"status_msg"`
-	Judge  string
+	Success bool   `json:"run_success"`
+	State   string `json:"state"`
+	Status  string `json:"status_msg"`
+	Judge   string
 
-	Runtime           int     `json:"elapsed_time"`
+	Runtime           string  `json:"status_runtime"`
 	RuntimePercentile float64 `json:"runtime_percentile"`
 	Memory            string  `json:"status_memory"`
 	MemoryPercentile  float64 `json:"memory_percentile"`
 
+	Input        string `json:"input"`
+	LastTestcase string `json:"last_testcase"`
+
 	Correct        bool            `json:"correct_answer"`
 	Answer         json.RawMessage `json:"code_answer"`
 	Output         json.RawMessage `json:"code_output"`
+	StdOut         json.RawMessage `json:"std_output"`
+	ExpectedOutput json.RawMessage `json:"expected_output"`
 	ExpectedAnswer json.RawMessage `json:"expected_code_answer"`
-	ExpectedOutput json.RawMessage `json:"expected_code_output"`
 
 	TotalCorrect   int `json:"total_correct"`
 	TotalTestcases int `json:"total_testcases"`
@@ -376,6 +381,6 @@ func parse(raw Data) (Question, error) {
 	q.CodeSnippets = raw.Data.Question.CodeSnippets
 	q.Status = raw.Data.Question.Status
 	q.SampleTestCase = raw.Data.Question.SampleTestCase
-	PrettyPrint(q)
+
 	return q, nil
 }
