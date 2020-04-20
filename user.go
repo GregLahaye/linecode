@@ -3,10 +3,11 @@ package main
 import "fmt"
 
 type User struct {
-	Language    Language `json:"language"`
-	Editor      string   `json:"editor"`
-	Hash        string   `json:"favorites_hash"`
-	Credentials struct {
+	Language       Language `json:"language"`
+	Editor         string   `json:"editor"`
+	TerminalEditor bool     `json:"terminal_editor"`
+	Hash           string   `json:"favorites_hash"`
+	Credentials    struct {
 		Session   string `json:"session"`
 		CSRFToken string `json:"csrf_token"`
 	} `json:"credentials"`
@@ -27,6 +28,8 @@ func LoadUser() (User, error) {
 		if u.Editor, err = StringInput(); err != nil {
 			return u, err
 		}
+
+		u.TerminalEditor = Confirm("Is this a terminal editor (e.g. vim)? ")
 
 		if err = u.FindFavorites(); err != nil {
 			return u, err

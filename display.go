@@ -6,7 +6,6 @@ import (
 	"github.com/GregLahaye/yogurt/colors"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"strconv"
 )
 
@@ -126,9 +125,14 @@ func (u *User) DisplayQuestion(id int, save, open bool) error {
 		}
 
 		if open {
-			cmd := exec.Command(u.Editor, filename)
-			if err = cmd.Start(); err != nil {
-				return err
+			if u.TerminalEditor {
+				if err = RunCommand(u.Editor, filename); err != nil {
+					return err
+				}
+			} else {
+				if err = StartCommand(u.Editor, filename); err != nil {
+					return err
+				}
 			}
 		}
 	}

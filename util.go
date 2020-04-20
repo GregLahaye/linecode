@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -128,6 +129,19 @@ func MultilineInput() (string, error) {
 			s += i
 		}
 	}
+}
+
+func StartCommand(name string, arg ...string) error {
+	cmd := exec.Command(name, arg...)
+	return cmd.Start()
+}
+
+func RunCommand(name string, arg ...string) error {
+	cmd := exec.Command(name, arg...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func Confirm(prompt string) bool {
