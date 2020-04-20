@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -63,9 +64,48 @@ func ReadFile(filename string) (string, error) {
 	return string(b), nil
 }
 
+func QuestionFilename(id int) string {
+	return path.Join(questionsDirectory, IntToString(id)+".json")
+}
+
+func Cache(filename string, v interface{}) error {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return err
+	}
+	p := path.Join(dir, "leetcode-terminal", filename)
+
+	return SaveStruct(p, v)
+}
+
+func Retrieve(filename string, v interface{}) error {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return err
+	}
+	p := path.Join(dir, "leetcode-terminal", filename)
+
+	return LoadStruct(p, v)
+}
+
+func Destroy(filename string) error {
+	dir, err := os.UserCacheDir()
+	if err != nil {
+		return err
+	}
+	p := path.Join(dir, "leetcode-terminal", filename)
+
+	return os.Remove(p)
+}
+
 func SaveStruct(filename string, v interface{}) error {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
+		return err
+	}
+
+	dir := path.Dir(filename)
+	if err = os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
 	}
 
@@ -128,6 +168,14 @@ func MultilineInput() (string, error) {
 		} else {
 			s += i
 		}
+	}
+}
+
+func (u *User) OpenEditor(filename string) error {
+	if u.TerminalEditor {
+		return RunCommand(u.Editor, filename)
+	} else {
+		return StartCommand(u.Editor, filename)
 	}
 }
 

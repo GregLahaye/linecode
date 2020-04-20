@@ -126,18 +126,7 @@ func (u *User) DisplayQuestion(id int, save, open bool) error {
 	}
 
 	if open {
-		fmt.Println("open")
-		if u.TerminalEditor {
-			fmt.Println("true")
-			if err = RunCommand(u.Editor, filename); err != nil {
-				return err
-			}
-		} else {
-			fmt.Println("false")
-			if err = StartCommand(u.Editor, filename); err != nil {
-				return err
-			}
-		}
+		u.OpenEditor(filename)
 	}
 
 	return nil
@@ -198,7 +187,8 @@ func DisplaySubmission(m Submission) {
 			s += ", less than " + FloatToString(m.MemoryPercentile) + "%"
 		}
 
-		os.Remove(problemsFilename)
+		Destroy(QuestionFilename(m.QuestionID))
+		Destroy(problemsFilename)
 	} else {
 		s += yogurt.Background(colors.Red1) + yogurt.Foreground(colors.Black) + " Wrong Answer "
 		s += yogurt.ResetBackground + yogurt.ResetForeground

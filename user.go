@@ -17,9 +17,23 @@ const userFilename = "user.json"
 
 func LoadUser() (User, error) {
 	var u User
-	if err := LoadStruct(userFilename, &u); err != nil {
+
+	if err := Retrieve(userFilename, &u); err != nil {
 		if err := u.Login(); err != nil {
-			return u, err
+			fmt.Println("Couldn't retrieve credentials from Chrome")
+			if Confirm("Would you like to manually enter credentials? (Y/N) ") {
+				fmt.Print("LEETCODE_SESSION: ")
+				if u.Credentials.Session, err = StringInput(); err != nil {
+					return u, err
+				}
+
+				fmt.Print("CSRF Token: ")
+				if u.Credentials.CSRFToken, err = StringInput(); err != nil {
+					return u, err
+				}
+			} else {
+				return u, err
+			}
 		}
 
 		u.Language = SelectLanguage()
@@ -35,7 +49,7 @@ func LoadUser() (User, error) {
 			return u, err
 		}
 
-		if err = SaveStruct(userFilename, u); err != nil {
+		if err = Cache(userFilename, u); err != nil {
 			return u, err
 		}
 	}

@@ -113,10 +113,11 @@ type SubmissionResult struct {
 }
 
 type Submission struct {
-	Success bool   `json:"run_success"`
-	State   string `json:"state"`
-	Status  string `json:"status_msg"`
-	Judge   string
+	QuestionID int    `json:"question_id"`
+	Success    bool   `json:"run_success"`
+	State      string `json:"state"`
+	Status     string `json:"status_msg"`
+	Judge      string
 
 	Runtime           string  `json:"status_runtime"`
 	RuntimePercentile float64 `json:"runtime_percentile"`
@@ -150,6 +151,7 @@ type Favorites struct {
 }
 
 const problemsFilename = "problems.json"
+const questionsDirectory = "questions"
 
 func (u *User) Request(method, url string, body dict) (*http.Response, error) {
 	client := &http.Client{}
@@ -208,14 +210,15 @@ func (u *User) GetSlug(id int) (string, error) {
 
 func (u *User) GetProblems() (Problems, error) {
 	var problems Problems
-	if err := LoadStruct(problemsFilename, &problems); err != nil {
+
+	if err := Retrieve(problemsFilename, &problems); err != nil {
 		problems, err = u.DownloadProblems()
 		if err != nil {
-			return Problems{}, err
+			return problems, err
 		}
 
-		if err = SaveStruct(problemsFilename, problems); err != nil {
-			return Problems{}, err
+		if err = Cache(problemsFilename, problems); err != nil {
+			return problems, err
 		}
 	}
 
@@ -246,6 +249,24 @@ func (u *User) DownloadProblems() (Problems, error) {
 }
 
 func (u *User) GetQuestion(id int) (Question, error) {
+	var q Question
+
+	filename := QuestionFilename(id)
+	if err := Retrieve(filename, &q); err != nil {
+		q, err = u.DownloadQuestion(id)
+		if err != nil {
+			return q, err
+		}
+
+		if err = Cache(filename, q); err != nil {
+			return q, err
+		}
+	}
+
+	return q, nil
+}
+
+func (u *User) DownloadQuestion(id int) (Question, error) {
 	slug, err := u.GetSlug(id)
 	if err != nil {
 		return Question{}, err
@@ -429,7 +450,7 @@ func (u *User) Star(id int) error {
 	}
 	defer resp.Body.Close()
 
-	return nil
+	return Destroy(problemsFilename)
 }
 
 func (u *User) UnStar(id int) error {
@@ -440,5 +461,5 @@ func (u *User) UnStar(id int) error {
 	}
 	defer resp.Body.Close()
 
-	return nil
+	return Destroy(problemsFilename)
 }
