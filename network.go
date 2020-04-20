@@ -140,6 +140,15 @@ type Submission struct {
 	CompileError string `json:"full_compile_error"`
 }
 
+type Favorites struct {
+	Favorites struct {
+		PrivateFavorites []struct {
+			Hash string `json:"id_hash"`
+			Name string `json:"name"`
+		} `json:"private_favorites"`
+	} `json:"favorites"`
+}
+
 const problemsFilename = "problems.json"
 
 func (u *User) Request(method, url string, body dict) (*http.Response, error) {
@@ -383,4 +392,53 @@ func parse(raw Data) (Question, error) {
 	q.SampleTestCase = raw.Data.Question.SampleTestCase
 
 	return q, nil
+}
+
+func (u *User) FindFavorites() error {
+	resp, err := u.Request("GET", "https://leetcode.com/list/api/questions", nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	f := Favorites{}
+	err = json.Unmarshal(body, &f)
+	if err != nil {
+		return err
+	}
+
+	for _, i := range f.Favorites.PrivateFavorites {
+		if i.Name == "Favorite" {
+			u.Hash = i.Hash
+		}
+	}
+
+	return nil
+}
+
+func (u *User) Star(id int) error {
+	data := dict{"favorite_id_hash": u.Hash, "question_id": id}
+	resp, err := u.Request("POST", "https://leetcode.com/list/api/questions", data)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
+}
+
+func (u *User) UnStar(id int) error {
+	l := "https://leetcode.com/list/api/questions/" + u.Hash + "/" + IntToString(id)
+	resp, err := u.Request("DELETE", l, nil)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	return nil
 }

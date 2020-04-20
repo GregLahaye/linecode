@@ -2,6 +2,7 @@ package main
 
 type User struct {
 	Language    Language `json:"language"`
+	Hash        string   `json:"favorites_hash"`
 	Credentials struct {
 		Session   string `json:"session"`
 		CSRFToken string `json:"csrf_token"`
@@ -18,6 +19,10 @@ func LoadUser() (User, error) {
 		}
 
 		u.Language = SelectLanguage()
+
+		if err = u.FindFavorites(); err != nil {
+			return u, err
+		}
 
 		if err = SaveStruct(userFilename, u); err != nil {
 			return u, err

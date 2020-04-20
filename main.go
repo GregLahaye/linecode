@@ -74,6 +74,24 @@ func main() {
 		}
 		submission.Judge = "large"
 		DisplaySubmission(submission)
+	case "star":
+		id, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err = u.Star(id); err != nil {
+			log.Fatal(err)
+		}
+	case "unstar":
+		id, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err = u.UnStar(id); err != nil {
+			log.Fatal(err)
+		}
 	default:
 		fmt.Println("Invalid option")
 	}
