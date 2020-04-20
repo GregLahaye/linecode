@@ -103,7 +103,7 @@ func Destroy(filename string) error {
 		return err
 	}
 
-	return os.Remove(filename)
+	return os.RemoveAll(filename)
 }
 
 func SaveStruct(filename string, v interface{}) error {

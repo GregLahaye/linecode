@@ -283,6 +283,7 @@ func (c *chrome) sendToTarget(method string, params interface{}) error {
 	return c.send("Target.sendMessageToTarget", dict{"message": string(b), "sessionId": c.sessionID})
 }
 
+// https://github.com/zserge/lorca/blob/master/locate.go
 func locate() string {
 	var paths []string
 	switch runtime.GOOS {

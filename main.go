@@ -133,6 +133,10 @@ func main() {
 		}
 
 		fmt.Println(dir)
+	case "download":
+		if err := u.DownloadAll(); err != nil {
+			log.Fatal(err)
+		}
 	default:
 		fmt.Println("Invalid option")
 	}

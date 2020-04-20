@@ -257,6 +257,31 @@ func (u *User) DownloadProblems() (Problems, error) {
 	return problems, nil
 }
 
+func (u *User) DownloadAll() error {
+	if err := Destroy(problemsFilename); err != nil {
+		return err
+	}
+
+	if err := Destroy(questionsDirectory); err != nil {
+		return err
+	}
+
+	problems, err := u.GetProblems()
+	if err != nil {
+		return err
+	}
+
+	for _, problem := range problems.Problems {
+		if _, err := u.GetQuestion(problem.Stat.ID); err != nil {
+			return err
+		} else {
+			DisplayProblem(problem)
+		}
+	}
+
+	return nil
+}
+
 func (u *User) GetQuestion(id int) (Question, error) {
 	var q Question
 
