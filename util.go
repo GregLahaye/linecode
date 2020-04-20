@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+const project = "linecode"
+
 func PrettyPrint(v interface{}) {
 	b, err := json.MarshalIndent(v, "", "  ")
 
@@ -68,34 +70,40 @@ func QuestionFilename(id int) string {
 	return path.Join(questionsDirectory, IntToString(id)+".json")
 }
 
-func Cache(filename string, v interface{}) error {
+func CacheDir(filename string) (string, error) {
 	dir, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(dir, project, filename), nil
+}
+
+func Cache(filename string, v interface{}) error {
+	filename, err := CacheDir(filename)
 	if err != nil {
 		return err
 	}
-	p := path.Join(dir, "leetcode-terminal", filename)
 
-	return SaveStruct(p, v)
+	return SaveStruct(filename, v)
 }
 
 func Retrieve(filename string, v interface{}) error {
-	dir, err := os.UserCacheDir()
+	filename, err := CacheDir(filename)
 	if err != nil {
 		return err
 	}
-	p := path.Join(dir, "leetcode-terminal", filename)
 
-	return LoadStruct(p, v)
+	return LoadStruct(filename, v)
 }
 
 func Destroy(filename string) error {
-	dir, err := os.UserCacheDir()
+	filename, err := CacheDir(filename)
 	if err != nil {
 		return err
 	}
-	p := path.Join(dir, "leetcode-terminal", filename)
 
-	return os.Remove(p)
+	return os.Remove(filename)
 }
 
 func SaveStruct(filename string, v interface{}) error {

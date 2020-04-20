@@ -10,8 +10,8 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path"
 	"regexp"
+	"runtime"
 )
 
 type chrome struct {
@@ -92,7 +92,7 @@ func start() (*chrome, error) {
 	}
 
 	args := []string{"https://leetcode.com/accounts/login/", "--remote-debugging-port=0", "--user-data-dir=" + dir}
-	cmd := exec.Command("/Program Files (x86)/Google/Chrome/Application/chrome.exe", args...)
+	cmd := exec.Command(locate(), args...)
 
 	pipe, err := cmd.StderrPipe()
 	if err != nil {
@@ -117,19 +117,17 @@ func start() (*chrome, error) {
 }
 
 func createUserDirectory() (string, error) {
-	dir, err := os.UserCacheDir()
+	filename, err := CacheDir("chrome")
 	if err != nil {
 		return "", err
 	}
 
-	dir = path.Join(dir, "leetcode-terminal", "chrome")
-
-	err = os.MkdirAll(dir, os.ModePerm)
+	err = os.MkdirAll(filename, os.ModePerm)
 	if err != nil {
 		return "", err
 	}
 
-	return dir, nil
+	return filename, nil
 }
 
 func readWebSocketURL(rd io.ReadCloser) (string, error) {
@@ -283,4 +281,45 @@ func (c *chrome) send(method string, params interface{}) error {
 func (c *chrome) sendToTarget(method string, params interface{}) error {
 	b, _ := json.Marshal(dict{"id": c.messageID + 1, "method": method, "params": params})
 	return c.send("Target.sendMessageToTarget", dict{"message": string(b), "sessionId": c.sessionID})
+}
+
+func locate() string {
+	var paths []string
+	switch runtime.GOOS {
+	case "darwin":
+		paths = []string{
+			"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+			"/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
+			"/Applications/Chromium.app/Contents/MacOS/Chromium",
+			"/usr/bin/google-chrome-stable",
+			"/usr/bin/google-chrome",
+			"/usr/bin/chromium",
+			"/usr/bin/chromium-browser",
+		}
+	case "windows":
+		paths = []string{
+			os.Getenv("LocalAppData") + "/Google/Chrome/Application/chrome.exe",
+			os.Getenv("ProgramFiles") + "/Google/Chrome/Application/chrome.exe",
+			os.Getenv("ProgramFiles(x86)") + "/Google/Chrome/Application/chrome.exe",
+			os.Getenv("LocalAppData") + "/Chromium/Application/chrome.exe",
+			os.Getenv("ProgramFiles") + "/Chromium/Application/chrome.exe",
+			os.Getenv("ProgramFiles(x86)") + "/Chromium/Application/chrome.exe",
+		}
+	default:
+		paths = []string{
+			"/usr/bin/google-chrome-stable",
+			"/usr/bin/google-chrome",
+			"/usr/bin/chromium",
+			"/usr/bin/chromium-browser",
+			"/snap/bin/chromium",
+		}
+	}
+
+	for _, path := range paths {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			return path
+		}
+	}
+
+	return ""
 }

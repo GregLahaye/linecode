@@ -126,6 +126,13 @@ func main() {
 		if err := u.DisplayGraph(); err != nil {
 			log.Fatal(err)
 		}
+	case "cache":
+		dir, err := CacheDir("")
+		if err != nil {
+			log.Fatal(dir)
+		}
+
+		fmt.Println(dir)
 	default:
 		fmt.Println("Invalid option")
 	}

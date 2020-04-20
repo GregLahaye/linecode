@@ -1,4 +1,4 @@
-module github.com/GregLahaye/leetcode-terminal
+module github.com/GregLahaye/linecode
 
 go 1.14
 
