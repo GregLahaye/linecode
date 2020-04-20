@@ -27,15 +27,90 @@ func (u *User) ListTags() error {
 	return nil
 }
 
-func (u *User) ListProblems(filters []rune, slugs []string) error {
-	problems, err := u.GetProblems()
+func (u *User) DisplayStatistics(filters []rune, slugs []string) error {
+	problems, err := u.FilteredProblems(filters, slugs)
 	if err != nil {
 		return err
 	}
 
-	tags, err := u.GetTags()
+	type difficulty struct {
+		Difficulty string
+		All        int
+		Accepted   int
+	}
+
+	a := []difficulty{
+		{"Easy", 0, 0},
+		{"Medium", 0, 0},
+		{"Hard", 0, 0},
+	}
+
+	for _, p := range problems {
+		l := p.Difficulty.Level - 1
+		a[l].All++
+		if p.Status == "ac" {
+			a[l].Accepted++
+		}
+	}
+
+	s := ""
+	for _, d := range a {
+		switch d.Difficulty {
+		case "Easy":
+			s += yogurt.Foreground(colors.Lime)
+		case "Medium":
+			s += yogurt.Foreground(colors.DarkOrange)
+		case "Hard":
+			s += yogurt.Foreground(colors.Red1)
+		}
+
+		s += " ● " + PadString(d.Difficulty, 7, false)
+		s += PadString(IntToString(d.Accepted)+"/"+IntToString(d.All), 9, true)
+		p := float64(d.Accepted) / float64(d.All)
+		s += "  " + PadString("("+FloatToString(p*100)+"%)", 9, true)
+		s += "  " + ProgressBar(p, 30)
+		s += yogurt.ResetForeground + "\n"
+	}
+
+	fmt.Print(s)
+
+	return nil
+}
+
+func ProgressBar(f float64, size int) string {
+	s := ""
+	bars := int(f * float64(size))
+	for i := 0; i < bars; i++ {
+		s += "█"
+	}
+	for i := 0; i < size-bars; i++ {
+		s += "░"
+	}
+	return s
+}
+
+func (u *User) ListProblems(filters []rune, slugs []string) error {
+	problems, err := u.FilteredProblems(filters, slugs)
 	if err != nil {
 		return err
+	}
+
+	for _, p := range problems {
+		DisplayProblem(p)
+	}
+
+	return nil
+}
+
+func (u *User) FilteredProblems(filters []rune, slugs []string) ([]Problem, error) {
+	problems, err := u.GetProblems()
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := u.GetTags()
+	if err != nil {
+		return nil, err
 	}
 
 	s := "\n"
@@ -46,15 +121,14 @@ func (u *User) ListProblems(filters []rune, slugs []string) error {
 		}
 	}
 
+	var filtered []Problem
 	for _, p := range problems.Problems {
 		if Filter(p, filters) && (len(slugs) == 0 || HasAnyTag(p, slugs, tags)) {
-			DisplayProblem(p)
+			filtered = append(filtered, p)
 		}
 	}
 
-	fmt.Print(s)
-
-	return nil
+	return filtered, err
 }
 
 func DisplayProblem(p Problem) {

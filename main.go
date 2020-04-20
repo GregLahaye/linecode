@@ -29,7 +29,12 @@ func main() {
 			r = []rune(s)
 		}
 
-		if err := u.ListProblems(r, os.Args[3:]); err != nil {
+		var tags []string
+		if len(os.Args) > 3 {
+			tags = os.Args[3:]
+		}
+
+		if err := u.ListProblems(r, tags); err != nil {
 			log.Fatal(err)
 		}
 	case "show":
@@ -100,6 +105,21 @@ func main() {
 		}
 	case "tags":
 		if err := u.ListTags(); err != nil {
+			log.Fatal(err)
+		}
+	case "stats":
+		var r []rune
+		if len(os.Args) > 2 {
+			s := os.Args[2]
+			r = []rune(s)
+		}
+
+		var tags []string
+		if len(os.Args) > 3 {
+			tags = os.Args[3:]
+		}
+
+		if err := u.DisplayStatistics(r, tags); err != nil {
 			log.Fatal(err)
 		}
 	default:
