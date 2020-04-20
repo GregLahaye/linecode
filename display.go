@@ -9,6 +9,24 @@ import (
 	"strconv"
 )
 
+func (u *User) ListTags() error {
+	s := ""
+
+	tags, err := u.GetTags()
+	if err != nil {
+		return err
+	}
+
+	for _, tag := range tags.Topics {
+		s += yogurt.Background(colors.Yellow1) + yogurt.Foreground(colors.Black) + " " + tag.Slug + " " + yogurt.ResetBackground + " "
+	}
+	s += yogurt.ResetForeground
+
+	fmt.Println(s)
+
+	return nil
+}
+
 func (u *User) ListProblems(filters []rune, tt []string) error {
 	problems, err := u.GetProblems()
 	if err != nil {

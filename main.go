@@ -98,6 +98,10 @@ func main() {
 		if err = u.UnStar(id); err != nil {
 			log.Fatal(err)
 		}
+	case "tags":
+		if err := u.ListTags(); err != nil {
+			log.Fatal(err)
+		}
 	default:
 		fmt.Println("Invalid option")
 	}
