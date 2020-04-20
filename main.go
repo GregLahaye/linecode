@@ -122,6 +122,10 @@ func main() {
 		if err := u.DisplayStatistics(r, tags); err != nil {
 			log.Fatal(err)
 		}
+	case "graph":
+		if err := u.DisplayGraph(); err != nil {
+			log.Fatal(err)
+		}
 	default:
 		fmt.Println("Invalid option")
 	}

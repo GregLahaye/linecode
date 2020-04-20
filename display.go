@@ -27,6 +27,69 @@ func (u *User) ListTags() error {
 	return nil
 }
 
+func ProblemStatus(id int, problems Problems) int {
+	for _, p := range problems.Problems {
+		if p.Stat.ID == id {
+			if p.Status == "ac" {
+				return 1
+			} else if p.Status == "notac" {
+				return 2
+			} else {
+				return 0
+			}
+		}
+	}
+
+	return -1
+}
+
+func HighestID(problems Problems) int {
+	id := 0
+	for _, p := range problems.Problems {
+		if p.Stat.ID > id {
+			id = p.Stat.ID
+		}
+	}
+
+	return id
+}
+
+func (u *User) DisplayGraph() error {
+	problems, err := u.GetProblems()
+	if err != nil {
+		return err
+	}
+	highest := HighestID(problems)
+
+	cols := 50
+	rows := highest / cols
+	s := ""
+	for i := 0; i < rows; i++ {
+		s += PadString(IntToString(i*cols), 4, true) + " "
+		for j := 0; j < cols; j++ {
+			id := i*cols + j
+			if id < highest {
+				if status := ProblemStatus(id, problems); status == 1 {
+					s += "■ "
+				} else if status == 0 {
+					s += "□ "
+				} else if status == 2 {
+					s += "● "
+				} else {
+					s += "  "
+				}
+			}
+		}
+		s += "\n\n"
+	}
+
+	s += "■ = Accepted, ● = Not Accepted, □ = Not Attempted"
+
+	fmt.Println(s)
+
+	return nil
+}
+
 func (u *User) DisplayStatistics(filters []rune, slugs []string) error {
 	problems, err := u.FilteredProblems(filters, slugs)
 	if err != nil {
