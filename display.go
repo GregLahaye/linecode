@@ -69,23 +69,22 @@ func (u *User) DisplayGraph() error {
 		for j := 0; j < cols; j++ {
 			id := i*cols + j
 			if id < highest {
-				if status := ProblemStatus(id, problems); status == 1 {
-					s += "■ "
-				} else if status == 0 {
-					s += "□ "
-				} else if status == 2 {
-					s += "● "
-				} else {
-					s += "  "
+				switch ProblemStatus(id, problems) {
+				case 0:
+					s += yogurt.Foreground(colors.Grey19) + "■ " + yogurt.ResetForeground
+				case 1:
+					s += yogurt.Foreground(colors.Lime) + "■ " + yogurt.ResetForeground
+				case 2:
+					s += yogurt.Foreground(colors.Red1) + "● " + yogurt.ResetForeground
+				default:
+					s += " "
 				}
 			}
 		}
 		s += "\n\n"
 	}
 
-	s += "■ = Accepted, ● = Not Accepted, □ = Not Attempted"
-
-	fmt.Println(s)
+	fmt.Print(s)
 
 	return nil
 }
