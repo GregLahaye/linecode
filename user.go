@@ -1,7 +1,10 @@
 package main
 
+import "fmt"
+
 type User struct {
 	Language    Language `json:"language"`
+	Editor      string   `json:"editor"`
 	Hash        string   `json:"favorites_hash"`
 	Credentials struct {
 		Session   string `json:"session"`
@@ -19,6 +22,11 @@ func LoadUser() (User, error) {
 		}
 
 		u.Language = SelectLanguage()
+
+		fmt.Print("Default editor: ")
+		if u.Editor, err = StringInput(); err != nil {
+			return u, err
+		}
 
 		if err = u.FindFavorites(); err != nil {
 			return u, err

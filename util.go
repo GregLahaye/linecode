@@ -107,6 +107,15 @@ func GetChar() (r rune, err error) {
 	return
 }
 
+func StringInput() (string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	s, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(s), nil
+}
+
 func MultilineInput() (string, error) {
 	s := ""
 	reader := bufio.NewReader(os.Stdin)

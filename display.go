@@ -6,6 +6,7 @@ import (
 	"github.com/GregLahaye/yogurt/colors"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strconv"
 )
 
@@ -65,7 +66,7 @@ func DisplayProblem(p Problem) {
 	fmt.Println(s)
 }
 
-func (u *User) DisplayQuestion(id int) error {
+func (u *User) DisplayQuestion(id int, save, open bool) error {
 	q, err := u.GetQuestion(id)
 	if err != nil {
 		return err
@@ -109,7 +110,7 @@ func (u *User) DisplayQuestion(id int) error {
 
 	filename := q.QuestionID + "." + q.TitleSlug + "." + u.Language.Extension
 
-	if _, err = os.Stat(filename); os.IsNotExist(err) {
+	if _, err = os.Stat(filename); (save || open) && os.IsNotExist(err) {
 		var code string
 		for _, l := range q.CodeSnippets {
 			if l.LangSlug == u.Language.Slug {
@@ -122,6 +123,13 @@ func (u *User) DisplayQuestion(id int) error {
 		err = ioutil.WriteFile(filename, []byte(c), os.ModePerm)
 		if err != nil {
 			return err
+		}
+
+		if open {
+			cmd := exec.Command(u.Editor, filename)
+			if err = cmd.Start(); err != nil {
+				return err
+			}
 		}
 	}
 

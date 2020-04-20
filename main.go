@@ -37,8 +37,14 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		open := false
+		if len(os.Args) > 3 {
+			if os.Args[3][0] == 'o' {
+				open = true
+			}
+		}
 
-		if err = u.DisplayQuestion(id); err != nil {
+		if err = u.DisplayQuestion(id, true, open); err != nil {
 			log.Fatal(err)
 		}
 	case "test":
