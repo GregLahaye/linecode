@@ -146,3 +146,94 @@ func IntToString(i int) string {
 func FloatToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', 2, 64)
 }
+
+func Filter(p Problem, f []rune) bool {
+	if len(f) == 0 {
+		return true
+	}
+
+	hit := false      // hit a positive case
+	miss := false     // missed a negative case
+	positive := false // positive case exists
+	negative := false // negative case exists
+	for _, c := range f {
+		switch c {
+		case 'e':
+			if p.Difficulty.Level == 1 {
+				hit = true
+			}
+			positive = true
+		case 'm':
+			if p.Difficulty.Level == 2 {
+				hit = true
+			}
+			positive = true
+		case 'h':
+			if p.Difficulty.Level == 3 {
+				hit = true
+			}
+			positive = true
+		case 'E':
+			if p.Difficulty.Level == 1 {
+				return false
+			}
+			miss = true
+			negative = true
+		case 'M':
+			if p.Difficulty.Level == 2 {
+				return false
+			}
+			miss = true
+			negative = true
+		case 'H':
+			if p.Difficulty.Level == 3 {
+				return false
+			}
+			miss = true
+			negative = true
+		case 'a':
+			if p.Status == "ac" {
+				hit = true
+			}
+			positive = true
+		case 'A':
+			if p.Status == "ac" {
+				return false
+			}
+			miss = true
+			negative = true
+		case 'l':
+			if p.PaidOnly {
+				hit = true
+			}
+			positive = true
+		case 'L':
+			if p.PaidOnly {
+				return false
+			}
+			miss = true
+			negative = true
+		case 's':
+			if p.Starred {
+				hit = true
+			}
+			positive = true
+		case 'S':
+			if p.Starred {
+				return false
+			}
+			miss = true
+			negative = true
+		}
+	}
+
+	if positive {
+		return hit
+	}
+
+	if positive && negative {
+		return hit && miss
+	}
+
+	return true
+}

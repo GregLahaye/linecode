@@ -9,14 +9,16 @@ import (
 	"strconv"
 )
 
-func (u *User) ListProblems() error {
+func (u *User) ListProblems(filters []rune) error {
 	problems, err := u.GetProblems()
 	if err != nil {
 		return err
 	}
 
 	for _, problem := range problems.Problems {
-		DisplayProblem(problem)
+		if Filter(problem, filters) {
+			DisplayProblem(problem)
+		}
 	}
 
 	return nil

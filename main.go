@@ -23,7 +23,13 @@ func main() {
 	arg := os.Args[1]
 	switch arg {
 	case "list":
-		if err := u.ListProblems(); err != nil {
+		var r []rune
+		if len(os.Args) > 2 {
+			s := os.Args[2]
+			r = []rune(s)
+		}
+
+		if err := u.ListProblems(r); err != nil {
 			log.Fatal(err)
 		}
 	case "show":
