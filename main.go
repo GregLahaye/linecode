@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/GregLahaye/yogurt"
 	"github.com/GregLahaye/yogurt/colors"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -88,6 +89,79 @@ func main() {
 
 		if !Open("https://leetcode.com/problems/" + slug + "/") {
 			fmt.Println("Failed to open browser")
+		}
+	case "code":
+		slug := os.Args[2]
+
+		problems, err := u.GetProblems()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var problem Problem
+		found := false
+		if id, err := strconv.Atoi(slug); err == nil {
+			for _, p := range problems.Problems {
+				if p.Stat.ID == id {
+					problem = p
+					found = true
+				}
+			}
+		} else {
+			for _, p := range problems.Problems {
+				if p.Stat.TitleSlug == slug {
+					problem = p
+					found = true
+				}
+			}
+		}
+
+		if !found {
+			id, err := u.GetID(slug)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			for _, p := range problems.Problems {
+				if p.Stat.ID == id {
+					problem = p
+					found = true
+				}
+			}
+		}
+
+		if found {
+			q, err := u.GetQuestion(problem.Stat.TitleSlug)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if q.IsPaidOnly {
+				fmt.Printf("%s is a locked question\n", q.TitleSlug)
+			} else {
+				filename := IntToString(problem.Stat.ID) + "." + problem.Stat.TitleSlug + "." + u.Language.Extension
+				if _, err = os.Stat(filename); os.IsNotExist(err) {
+					var code string
+					for _, l := range q.CodeSnippets {
+						if l.LangSlug == u.Language.Slug {
+							code = l.Code
+						}
+					}
+
+					c := u.Language.Comment.Start + "\n" + ParseHTML(q.Content) + "\n" + u.Language.Comment.End + "\n\n\n" + code
+
+					err = ioutil.WriteFile(filename, []byte(c), os.ModePerm)
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+
+				if err := u.OpenEditor(filename); err != nil {
+					log.Fatal(err)
+				}
+			}
+		} else {
+			fmt.Println("Could not find question")
 		}
 	case "test":
 		filename := os.Args[2]
