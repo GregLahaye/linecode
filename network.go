@@ -9,6 +9,7 @@ import (
 	"github.com/GregLahaye/yoyo/styles"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -217,6 +218,50 @@ func (u *User) GetSlug(id int) (string, error) {
 	return "", errors.New("slug not found")
 }
 
+func (u *User) GetID(slug string) (int, error) {
+	problems, err := u.GetProblems()
+	if err != nil {
+		return 0, err
+	}
+
+	for _, p := range problems.Problems {
+		if p.Stat.TitleSlug == slug {
+			return p.Stat.ID, nil
+		}
+	}
+
+	fmt.Printf("Searching for questions matching '%s'\n", slug)
+	slug = url.PathEscape(slug)
+	resp, err := u.Request("GET", "https://leetcode.com/problems/api/filter-questions/"+slug, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	var ids []int
+	if err = json.Unmarshal(body, &ids); err != nil {
+		return 0, err
+	}
+
+	if len(ids) > 0 {
+		max := 10
+		if len(ids) < max {
+			max = len(ids)
+		}
+		p, err := u.SelectQuestion(ids[:max])
+		if err == nil {
+			return p.Stat.ID, nil
+		}
+	}
+
+	return 0, err
+}
+
 func (u *User) GetProblems() (Problems, error) {
 	var problems Problems
 
@@ -272,7 +317,7 @@ func (u *User) DownloadAll() error {
 	}
 
 	for _, problem := range problems.Problems {
-		if _, err := u.GetQuestion(problem.Stat.ID); err != nil {
+		if _, err := u.GetQuestion(problem.Stat.TitleSlug); err != nil {
 			return err
 		} else {
 			DisplayProblem(problem)
@@ -282,12 +327,21 @@ func (u *User) DownloadAll() error {
 	return nil
 }
 
-func (u *User) GetQuestion(id int) (Question, error) {
+func (u *User) GetQuestion(slug string) (Question, error) {
 	var q Question
+
+	id, err := u.GetID(slug)
+	if err != nil {
+		return q, err
+	}
+	slug, err = u.GetSlug(id)
+	if err != nil {
+		return q, err
+	}
 
 	filename := QuestionFilename(id)
 	if err := Retrieve(filename, &q); err != nil {
-		q, err = u.DownloadQuestion(id)
+		q, err = u.DownloadQuestion(slug)
 		if err != nil {
 			return q, err
 		}
@@ -300,12 +354,7 @@ func (u *User) GetQuestion(id int) (Question, error) {
 	return q, nil
 }
 
-func (u *User) DownloadQuestion(id int) (Question, error) {
-	slug, err := u.GetSlug(id)
-	if err != nil {
-		return Question{}, err
-	}
-
+func (u *User) DownloadQuestion(slug string) (Question, error) {
 	s := yoyo.Start(styles.Simple)
 	defer s.End()
 
@@ -334,10 +383,12 @@ func (u *User) DownloadQuestion(id int) (Question, error) {
 	return q, nil
 }
 
-func (u *User) TestCode(id int, filename, testcase string) (Submission, error) {
-	q, err := u.GetQuestion(id)
-	slug := q.TitleSlug
+func (u *User) TestCode(id int, slug, filename, testcase string) (Submission, error) {
 	if testcase == "" {
+		q, err := u.GetQuestion(slug)
+		if err != nil {
+			return Submission{}, nil
+		}
 		testcase = q.SampleTestCase
 		fmt.Println(testcase)
 	}
@@ -370,12 +421,7 @@ func (u *User) TestCode(id int, filename, testcase string) (Submission, error) {
 	return u.Retry(result.InterpretID)
 }
 
-func (u *User) SubmitCode(id int, filename string) (Submission, error) {
-	slug, err := u.GetSlug(id)
-	if err != nil {
-		return Submission{}, err
-	}
-
+func (u *User) SubmitCode(id int, slug, filename string) (Submission, error) {
 	s := yoyo.Start(styles.Simple)
 	defer s.End()
 

@@ -234,10 +234,17 @@ func DisplayProblem(p Problem) {
 	fmt.Println(s)
 }
 
-func (u *User) DisplayQuestion(id int, save, open bool) error {
-	q, err := u.GetQuestion(id)
+func (u *User) DisplayQuestion(slug string, save, open bool) error {
+	q, err := u.GetQuestion(slug)
 	if err != nil {
 		return err
+	}
+
+	if q.IsPaidOnly {
+		fmt.Print(" " + yogurt.Background(colors.Red3))
+		fmt.Print("[" + PadString(q.QuestionID, 4, true) + "] " + q.TitleSlug + " is a locked question")
+		fmt.Print(yogurt.ResetBackground)
+		return nil
 	}
 
 	s := ""
@@ -246,7 +253,8 @@ func (u *User) DisplayQuestion(id int, save, open bool) error {
 	}
 	s += yogurt.ResetForeground
 
-	s += "\n\n ● Tags: "
+	s += "\n\n #" + q.QuestionID + " - " + q.Title
+	s += "\n ● Tags: "
 	for i, t := range q.TopicTags {
 		s += t.Slug
 		if i < len(q.TopicTags)-1 {
@@ -295,6 +303,8 @@ func (u *User) DisplayQuestion(id int, save, open bool) error {
 	}
 
 	if open {
+		fmt.Print("Press enter to open code in editor...")
+		StringInput()
 		u.OpenEditor(filename)
 	}
 
@@ -342,6 +352,9 @@ func DisplaySubmission(m Submission) {
 		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " Compile Error "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
 		s += "\n" + m.CompileError
+	} else if m.Status == "Time Limit Exceeded" {
+		s += yogurt.Background(colors.Red1) + yogurt.Foreground(colors.Black) + " Time Limit Exceeded "
+		s += yogurt.ResetBackground + yogurt.ResetForeground
 	} else if ok {
 		s += yogurt.Background(colors.Lime) + yogurt.Foreground(colors.Black) + " Accepted "
 		s += yogurt.ResetBackground + yogurt.ResetForeground

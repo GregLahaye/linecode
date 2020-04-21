@@ -38,9 +38,11 @@ func main() {
 			log.Fatal(err)
 		}
 	case "show":
-		id, err := strconv.Atoi(os.Args[2])
-		if err != nil {
-			log.Fatal(err)
+		slug := os.Args[2]
+		if id, err := strconv.Atoi(slug); err == nil {
+			if s, err := u.GetSlug(id); err == nil {
+				slug = s
+			}
 		}
 		open := false
 		if len(os.Args) > 3 {
@@ -49,8 +51,43 @@ func main() {
 			}
 		}
 
-		if err = u.DisplayQuestion(id, true, open); err != nil {
+		if err = u.DisplayQuestion(slug, true, open); err != nil {
 			log.Fatal(err)
+		}
+	case "open":
+		slug := os.Args[2]
+		if id, err := strconv.Atoi(slug); err == nil {
+			if s, err := u.GetSlug(id); err == nil {
+				slug = s
+			}
+		}
+
+		found := false
+		problems, err := u.GetProblems()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for _, p := range problems.Problems {
+			if p.Stat.TitleSlug == slug {
+				found = true
+			}
+		}
+
+		if !found {
+			id, err := u.GetID(slug)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			slug, err = u.GetSlug(id)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		if !Open("https://leetcode.com/problems/" + slug + "/") {
+			fmt.Println("Failed to open browser")
 		}
 	case "test":
 		filename := os.Args[2]
@@ -59,14 +96,15 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		slug := parts[1]
 
-		fmt.Println("Please enter a testcase:")
+		fmt.Println("Please enter a testcase: (optional)")
 		testcase, err := MultilineInput()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		submission, err := u.TestCode(id, filename, testcase)
+		submission, err := u.TestCode(id, slug, filename, testcase)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -78,8 +116,9 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		slug := parts[1]
 
-		submission, err := u.SubmitCode(id, filename)
+		submission, err := u.SubmitCode(id, slug, filename)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -136,6 +175,12 @@ func main() {
 	case "download":
 		if err := u.DownloadAll(); err != nil {
 			log.Fatal(err)
+		}
+	case "destroy":
+		if Confirm("Are you sure you want to delete all cached files? (Y/N) ") {
+			if err := Destroy(""); err != nil {
+				log.Fatal(err)
+			}
 		}
 	default:
 		fmt.Println("Invalid option")
