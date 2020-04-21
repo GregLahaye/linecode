@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/GregLahaye/yogurt"
 	"github.com/GregLahaye/yogurt/colors"
@@ -8,6 +9,14 @@ import (
 	"os"
 	"strconv"
 )
+
+func PrettyPrint(v interface{}) {
+	b, err := json.MarshalIndent(v, "", "  ")
+
+	if err == nil {
+		fmt.Println(string(b))
+	}
+}
 
 func (u *User) ListTags() error {
 	s := ""
@@ -17,7 +26,7 @@ func (u *User) ListTags() error {
 		return err
 	}
 
-	for _, tag := range tags.Topics {
+	for _, tag := range tags {
 		s += yogurt.Background(colors.Yellow1) + yogurt.Foreground(colors.Black) + " " + tag.Slug + " " + yogurt.ResetBackground + " "
 	}
 	s += yogurt.ResetForeground
@@ -27,8 +36,8 @@ func (u *User) ListTags() error {
 	return nil
 }
 
-func ProblemStatus(id int, problems Problems) int {
-	for _, p := range problems.Problems {
+func ProblemStatus(id int, problems []Problem) int {
+	for _, p := range problems {
 		if p.Stat.ID == id {
 			if p.Status == "ac" {
 				return 1
@@ -43,9 +52,9 @@ func ProblemStatus(id int, problems Problems) int {
 	return -1
 }
 
-func HighestID(problems Problems) int {
+func HighestID(problems []Problem) int {
 	id := 0
-	for _, p := range problems.Problems {
+	for _, p := range problems {
 		if p.Stat.ID > id {
 			id = p.Stat.ID
 		}
@@ -89,8 +98,18 @@ func (u *User) DisplayGraph() error {
 	return nil
 }
 
-func (u *User) DisplayStatistics(filters []rune, slugs []string) error {
-	problems, err := u.FilteredProblems(filters, slugs)
+func (u *User) DisplayStatistics(f Filter) error {
+	problems, err := u.GetProblems()
+	if err != nil {
+		return err
+	}
+
+	tags, err := u.GetTags()
+	if err != nil {
+		return err
+	}
+
+	filtered := FilterProblems(problems, tags, f)
 	if err != nil {
 		return err
 	}
@@ -107,7 +126,7 @@ func (u *User) DisplayStatistics(filters []rune, slugs []string) error {
 		{"Hard", 0, 0},
 	}
 
-	for _, p := range problems {
+	for _, p := range filtered {
 		l := p.Difficulty.Level - 1
 		a[l].All++
 		if p.Status == "ac" {
@@ -151,46 +170,35 @@ func ProgressBar(f float64, size int) string {
 	return s
 }
 
-func (u *User) ListProblems(filters []rune, slugs []string) error {
-	problems, err := u.FilteredProblems(filters, slugs)
+func (u *User) ListProblems(f Filter) error {
+	problems, err := u.GetProblems()
 	if err != nil {
 		return err
 	}
 
-	for _, p := range problems {
+	tags, err := u.GetTags()
+	if err != nil {
+		return err
+	}
+
+	filtered := FilterProblems(problems, tags, f)
+
+	for _, p := range filtered {
 		DisplayProblem(p)
 	}
 
 	return nil
 }
 
-func (u *User) FilteredProblems(filters []rune, slugs []string) ([]Problem, error) {
-	problems, err := u.GetProblems()
-	if err != nil {
-		return nil, err
-	}
-
-	tags, err := u.GetTags()
-	if err != nil {
-		return nil, err
-	}
-
-	s := "\n"
-	for i, slug := range slugs {
-		if !TagExists(slug, tags) {
-			s += "Tag '" + slug + "' does not exist\n"
-			slugs = append(slugs[:i], slugs[i+1:]...)
-		}
-	}
-
+func FilterProblems(problems []Problem, tags []Tag, f Filter) []Problem {
 	var filtered []Problem
-	for _, p := range problems.Problems {
-		if Filter(p, filters) && (len(slugs) == 0 || HasAnyTag(p, slugs, tags)) {
+	for _, p := range problems {
+		if FilterProblem(p, tags, f) {
 			filtered = append(filtered, p)
 		}
 	}
 
-	return filtered, err
+	return filtered
 }
 
 func DisplayProblem(p Problem) {
@@ -216,7 +224,7 @@ func DisplayProblem(p Problem) {
 
 	s += "[" + PadString(strconv.Itoa(p.Stat.ID), 4, true) + "] "
 
-	s += PadString(p.Stat.TitleSlug, 80, false) + " "
+	s += PadString(p.Stat.Slug, 80, false) + " "
 
 	switch p.Difficulty.Level {
 	case 1:
@@ -228,36 +236,37 @@ func DisplayProblem(p Problem) {
 	}
 	s += yogurt.ResetForeground
 
+	// TODO: p.Stat.AcceptanceRate
 	f := (float64(p.Stat.TotalAccepted) / float64(p.Stat.TotalSubmitted)) * 100
 	s += "(" + strconv.FormatFloat(f, 'f', 2, 64) + "%)"
 
 	fmt.Println(s)
 }
 
-func (u *User) DisplayQuestion(slug string, save, open bool) error {
-	q, err := u.GetQuestion(slug)
+func (u *User) DisplayQuestion(arg string, save, open bool) error {
+	q, err := u.GetQuestion(arg)
 	if err != nil {
 		return err
 	}
 
 	if q.IsPaidOnly {
 		fmt.Print(" " + yogurt.Background(colors.Red3))
-		fmt.Print("[" + PadString(q.QuestionID, 4, true) + "] " + q.TitleSlug + " is a locked question")
+		fmt.Print("[" + PadString(q.QuestionID, 4, true) + "] " + q.Slug + " is a locked question")
 		fmt.Print(yogurt.ResetBackground)
 		return nil
 	}
 
 	s := ""
 	for _, l := range q.CodeSnippets {
-		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " " + l.LangSlug + " " + yogurt.ResetBackground + " "
+		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " " + l.Slug + " " + yogurt.ResetBackground + " "
 	}
 	s += yogurt.ResetForeground
 
 	s += "\n\n #" + q.QuestionID + " - " + q.Title
 	s += "\n ● Tags: "
-	for i, t := range q.TopicTags {
+	for i, t := range q.Tags {
 		s += t.Slug
-		if i < len(q.TopicTags)-1 {
+		if i < len(q.Tags)-1 {
 			s += ", "
 		}
 	}
@@ -284,12 +293,12 @@ func (u *User) DisplayQuestion(slug string, save, open bool) error {
 
 	fmt.Println(s)
 
-	filename := q.QuestionID + "." + q.TitleSlug + "." + u.Language.Extension
+	filename := q.QuestionID + "." + q.Slug + "." + u.Language.Extension
 
 	if _, err = os.Stat(filename); (save || open) && os.IsNotExist(err) {
 		var code string
 		for _, l := range q.CodeSnippets {
-			if l.LangSlug == u.Language.Slug {
+			if l.Slug == u.Language.Slug {
 				code = l.Code
 			}
 		}
@@ -311,28 +320,59 @@ func (u *User) DisplayQuestion(slug string, save, open bool) error {
 	return nil
 }
 
-func DisplaySubmission(m Submission) {
+func (u *User) DisplayTest(filename string) error {
+	id, slug := SplitFilename(filename)
+
+	tc, err := MultilineInput("Please enter a testcase: (optional)")
+	if err != nil {
+		return err
+	}
+
+	submission, err := u.TestCode(id, slug, filename, tc)
+	if err != nil {
+		return err
+	}
+
+	DisplaySubmission(submission)
+
+	return nil
+}
+
+func (u *User) DisplaySubmit(filename string) error {
+	id, slug := SplitFilename(filename)
+
+	submission, err := u.SubmitCode(id, slug, filename)
+	if err != nil {
+		return err
+	}
+
+	DisplaySubmission(submission)
+
+	return nil
+}
+
+func DisplaySubmission(submission Submission) {
 	s := ""
 
-	ok := m.Success
-	answer := string(m.Answer)
-	testcase := m.Input
+	ok := submission.Success
+	answer := string(submission.Answer)
+	testcase := submission.Input
 	if testcase == "" {
-		testcase = m.LastTestcase
+		testcase = submission.LastTestcase
 	}
-	passed := m.TotalCorrect
-	total := m.TotalTestcases
+	passed := submission.TotalCorrect
+	total := submission.TotalTestcases
 
 	var expected string
 	var stdout string
-	if m.Judge == "large" {
-		answer = string(m.Output)
-		expected = string(m.ExpectedOutput)
-		stdout = string(m.StdOut)
+	if submission.Judge == "large" {
+		answer = string(submission.Output)
+		expected = string(submission.ExpectedOutput)
+		stdout = string(submission.StdOut)
 	} else {
-		stdout = string(m.Output)
-		expected = string(m.ExpectedAnswer)
-		if !m.Correct {
+		stdout = string(submission.Output)
+		expected = string(submission.ExpectedAnswer)
+		if !submission.Correct {
 			ok = false
 		}
 	}
@@ -340,37 +380,38 @@ func DisplaySubmission(m Submission) {
 	if passed != total {
 		ok = false
 	}
-	if m.Status != "Accepted" {
+	if submission.Status != "Accepted" {
 		ok = false
 	}
 
-	if m.Status == "Runtime Error" {
+	if submission.Status == "Runtime Error" {
 		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " Runtime Error "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
-		s += "\n" + m.RuntimeError
-	} else if m.Status == "Compile Error" {
+		s += "\n" + submission.RuntimeError
+	} else if submission.Status == "Compile Error" {
 		s += yogurt.Background(colors.DarkOrange) + yogurt.Foreground(colors.Black) + " Compile Error "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
-		s += "\n" + m.CompileError
-	} else if m.Status == "Time Limit Exceeded" {
+		s += "\n" + submission.CompileError
+	} else if submission.Status == "Time Limit Exceeded" {
 		s += yogurt.Background(colors.Red1) + yogurt.Foreground(colors.Black) + " Time Limit Exceeded "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
 	} else if ok {
 		s += yogurt.Background(colors.Lime) + yogurt.Foreground(colors.Black) + " Accepted "
 		s += yogurt.ResetBackground + yogurt.ResetForeground
 
-		s += "\n ● Runtime: " + m.Runtime
-		if m.RuntimePercentile > 0 {
-			s += ", faster than " + FloatToString(m.RuntimePercentile) + "%"
+		s += "\n ● Runtime: " + submission.Runtime
+		if submission.RuntimePercentile > 0 {
+			s += ", faster than " + FloatToString(submission.RuntimePercentile) + "%"
 		}
 
-		s += "\n ● Memory: " + m.Memory
-		if m.MemoryPercentile > 0 {
-			s += ", less than " + FloatToString(m.MemoryPercentile) + "%"
+		s += "\n ● Memory: " + submission.Memory
+		if submission.MemoryPercentile > 0 {
+			s += ", less than " + FloatToString(submission.MemoryPercentile) + "%"
 		}
 
-		Destroy(QuestionFilename(m.QuestionID))
-		Destroy(problemsFilename)
+		CacheDestroy(QuestionFilename(submission.QuestionID))
+
+		CacheDestroy(problemsFilename)
 	} else {
 		s += yogurt.Background(colors.Red1) + yogurt.Foreground(colors.Black) + " Wrong Answer "
 		s += yogurt.ResetBackground + yogurt.ResetForeground

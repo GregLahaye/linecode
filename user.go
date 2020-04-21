@@ -18,7 +18,7 @@ const userFilename = "user.json"
 func LoadUser() (User, error) {
 	var u User
 
-	if err := Retrieve(userFilename, &u); err != nil {
+	if err := CacheRetrieve(userFilename, &u); err != nil {
 		if err := u.Login(); err != nil {
 			fmt.Println("Couldn't retrieve credentials from Chrome")
 			if Confirm("Would you like to manually enter credentials? (Y/N) ") {
@@ -49,7 +49,7 @@ func LoadUser() (User, error) {
 			return u, err
 		}
 
-		if err = Cache(userFilename, u); err != nil {
+		if err = CacheStore(userFilename, u); err != nil {
 			return u, err
 		}
 	}

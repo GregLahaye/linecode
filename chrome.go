@@ -91,7 +91,7 @@ func start() (*chrome, error) {
 		return nil, err
 	}
 
-	args := []string{"https://leetcode.com/accounts/login/", "--remote-debugging-port=0", "--user-data-dir=" + dir}
+	args := []string{baseUrl + "/accounts/login/", "--remote-debugging-port=0", "--user-data-dir=" + dir}
 	cmd := exec.Command(locate(), args...)
 
 	pipe, err := cmd.StderrPipe()
@@ -213,7 +213,7 @@ func (c *chrome) waitForLogin() error {
 		if m.Method == "Network.requestWillBeSent" {
 			r := request{}
 			json.Unmarshal(m.Params, &r)
-			if r.Request.Method == "POST" && r.Request.URL == "https://leetcode.com/accounts/login/" {
+			if r.Request.Method == "POST" && r.Request.URL == baseUrl+"/accounts/login/" {
 				requestID = r.RequestID
 			}
 		} else if m.Method == "Network.responseReceived" {

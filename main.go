@@ -1,60 +1,56 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
-	"github.com/GregLahaye/yogurt"
-	"github.com/GregLahaye/yogurt/colors"
-	"io/ioutil"
-	"log"
 	"os"
-	"strconv"
-	"strings"
 )
 
-func main() {
-	defer fmt.Print(yogurt.ResetForeground, yogurt.ResetBackground)
+const project = "linecode"
+const baseUrl = "https://leetcode.com"
+
+func root(args []string) error {
+	if len(args) < 1 {
+		return errors.New("You must pass a sub-command")
+	}
 
 	u, err := LoadUser()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	fmt.Print(yogurt.Foreground(colors.Grey78))
-
-	arg := os.Args[1]
-	switch arg {
+	subcommand := args[0]
+	switch subcommand {
 	case "list":
-		var r []rune
-		if len(os.Args) > 2 {
-			s := os.Args[2]
-			r = []rune(s)
-		}
-
-		var tags []string
-		if len(os.Args) > 3 {
-			tags = os.Args[3:]
-		}
-
-		if err := u.ListProblems(r, tags); err != nil {
-			log.Fatal(err)
-		}
+		f := parseFilterFlags()
+		return u.ListProblems(f)
 	case "show":
-		slug := os.Args[2]
-		if id, err := strconv.Atoi(slug); err == nil {
-			if s, err := u.GetSlug(id); err == nil {
-				slug = s
-			}
-		}
-		open := false
-		if len(os.Args) > 3 {
-			if os.Args[3][0] == 'o' {
-				open = true
-			}
-		}
+		fs := flag.NewFlagSet("", flag.ContinueOnError)
+		save := fs.Bool("s", true, "save code snippet")
+		open := fs.Bool("o", false, "open code snippet in editor")
+		_ = fs.Parse(args[2:])
 
-		if err = u.DisplayQuestion(slug, true, open); err != nil {
-			log.Fatal(err)
-		}
+		return u.DisplayQuestion(args[1], *save, *open)
+	case "test":
+		return u.DisplayTest(args[1])
+	case "submit":
+		return u.DisplaySubmit(args[1])
+	}
+
+	return errors.New("unknown subcommand")
+}
+
+func main() {
+	if err := root(os.Args[1:]); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
+
+/*
+func none() {
+	switch subcommand {
 	case "open":
 		slug := os.Args[2]
 		if id, err := strconv.Atoi(slug); err == nil {
@@ -70,7 +66,7 @@ func main() {
 		}
 
 		for _, p := range problems.Problems {
-			if p.Stat.TitleSlug == slug {
+			if p.Stat.Slug == slug {
 				found = true
 			}
 		}
@@ -87,7 +83,7 @@ func main() {
 			}
 		}
 
-		if !Open("https://leetcode.com/problems/" + slug + "/") {
+		if !Open(baseUrl + "/problems/" + slug + "/") {
 			fmt.Println("Failed to open browser")
 		}
 	case "code":
@@ -109,7 +105,7 @@ func main() {
 			}
 		} else {
 			for _, p := range problems.Problems {
-				if p.Stat.TitleSlug == slug {
+				if p.Stat.Slug == slug {
 					problem = p
 					found = true
 				}
@@ -131,19 +127,19 @@ func main() {
 		}
 
 		if found {
-			q, err := u.GetQuestion(problem.Stat.TitleSlug)
+			q, err := u.GetQuestion(problem.Stat.Slug)
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			if q.IsPaidOnly {
-				fmt.Printf("%s is a locked question\n", q.TitleSlug)
+				fmt.Printf("%s is a locked question\n", q.Slug)
 			} else {
-				filename := IntToString(problem.Stat.ID) + "." + problem.Stat.TitleSlug + "." + u.Language.Extension
+				filename := IntToString(problem.Stat.ID) + "." + problem.Stat.Slug + "." + u.Language.Extension
 				if _, err = os.Stat(filename); os.IsNotExist(err) {
 					var code string
 					for _, l := range q.CodeSnippets {
-						if l.LangSlug == u.Language.Slug {
+						if l.Slug == u.Language.Slug {
 							code = l.Code
 						}
 					}
@@ -163,41 +159,6 @@ func main() {
 		} else {
 			fmt.Println("Could not find question")
 		}
-	case "test":
-		filename := os.Args[2]
-		parts := strings.Split(filename, ".")
-		id, err := strconv.Atoi(parts[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		slug := parts[1]
-
-		fmt.Println("Please enter a testcase: (optional)")
-		testcase, err := MultilineInput()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		submission, err := u.TestCode(id, slug, filename, testcase)
-		if err != nil {
-			log.Fatal(err)
-		}
-		DisplaySubmission(submission)
-	case "submit":
-		filename := os.Args[2]
-		parts := strings.Split(filename, ".")
-		id, err := strconv.Atoi(parts[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		slug := parts[1]
-
-		submission, err := u.SubmitCode(id, slug, filename)
-		if err != nil {
-			log.Fatal(err)
-		}
-		submission.Judge = "large"
-		DisplaySubmission(submission)
 	case "star":
 		id, err := strconv.Atoi(os.Args[2])
 		if err != nil {
@@ -250,13 +211,29 @@ func main() {
 		if err := u.DownloadAll(); err != nil {
 			log.Fatal(err)
 		}
-	case "destroy":
-		if Confirm("Are you sure you want to delete all cached files? (Y/N) ") {
-			if err := Destroy(""); err != nil {
-				log.Fatal(err)
+	case "delete":
+		files := map[string]string{"all": "", "chrome": "chrome", "user": userFilename, "problems": problemsFilename, "questions": questionsDirectory, "tags": tagsFilename}
+
+		var filename string
+		var found bool
+		for k, v := range files {
+			if k == os.Args[2] {
+				filename = v
+				found = false
 			}
+		}
+
+		if found {
+			if Confirm("Are you sure? (Y/N)") {
+				if err := CacheDestroy(filename); err != nil {
+					log.Fatal(err)
+				}
+			}
+		} else {
+			fmt.Printf("%s is not a valid option\n", os.Args[2])
 		}
 	default:
 		fmt.Println("Invalid option")
 	}
 }
+*/
