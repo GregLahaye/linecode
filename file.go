@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -32,6 +33,7 @@ func LoadStruct(filename string, v interface{}) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
@@ -98,4 +100,27 @@ func CacheDestroy(filename string) error {
 	}
 
 	return os.RemoveAll(filename)
+}
+
+func Destroy(arg string) error {
+	files := map[string]string{"all": "", "chrome": "chrome", "user": userFilename, "problems": problemsFilename, "questions": questionsDirectory, "tags": tagsFilename}
+
+	var filename string
+	var found bool
+	for k, v := range files {
+		if k == arg {
+			filename = v
+			found = true
+		}
+	}
+
+	if found {
+		if Confirm("Are you sure? (Y/N) ") {
+			return CacheDestroy(filename)
+		}
+	} else {
+		errors.New("invalid option")
+	}
+
+	return nil
 }

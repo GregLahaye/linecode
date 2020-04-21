@@ -40,7 +40,6 @@ func FilterProblem(p Problem, tags []Tag, f Filter) bool {
 	fail = fail || ShouldFail(p.Starred, f.Starred, false)
 	fail = fail || ShouldFail(p.PaidOnly, f.Paid, false)
 	fail = fail || ShouldFail(p.Status == accepted, f.Accepted, false)
-
 	fail = fail || !HasAnyTag(p, f.Tags, tags)
 
 	return !fail
@@ -60,6 +59,10 @@ func ShouldFail(c bool, s int, d bool) bool {
 }
 
 func HasAnyTag(p Problem, slugs []string, tags []Tag) bool {
+	if len(slugs) == 0 {
+		return true
+	}
+
 	for _, slug := range slugs {
 		if HasTag(p, slug, tags) {
 			return true

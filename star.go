@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 )
 
-func (u *User) Star(id int) error {
-	data := dict{"favorite_id_hash": u.Hash, "question_id": id}
-	_, err := u.Request("POST", baseUrl+"/list/api/questions", data)
+func (u *User) Star(arg string) error {
+	problem, err := u.FindProblem(arg)
+	if err != nil {
+		return err
+	}
+
+	data := dict{"favorite_id_hash": u.Hash, "question_id": problem.Stat.ID}
+	_, err = u.Request("POST", baseUrl+"/list/api/questions", data)
 	if err != nil {
 		return err
 	}
@@ -14,9 +19,14 @@ func (u *User) Star(id int) error {
 	return CacheDestroy(problemsFilename)
 }
 
-func (u *User) Unstar(id int) error {
-	url := baseUrl + "/list/api/questions/" + u.Hash + "/" + IntToString(id)
-	_, err := u.Request("DELETE", url, nil)
+func (u *User) Unstar(arg string) error {
+	problem, err := u.FindProblem(arg)
+	if err != nil {
+		return err
+	}
+
+	url := baseUrl + "/list/api/questions/" + u.Hash + "/" + IntToString(problem.Stat.ID)
+	_, err = u.Request("DELETE", url, nil)
 	if err != nil {
 		return err
 	}

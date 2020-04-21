@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"runtime"
@@ -33,12 +34,13 @@ func Commands() [][]string {
 	return cmds
 }
 
-func Open(url string) bool {
+func Open(url string) error {
 	for _, args := range Commands() {
 		cmd := exec.Command(args[0], append(args[1:], url)...)
 		if cmd.Start() == nil {
-			return true
+			return nil
 		}
 	}
-	return false
+
+	return errors.New("couldn't open browser")
 }
