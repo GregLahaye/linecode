@@ -1,17 +1,20 @@
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/GregLahaye/linecode/store"
+)
 
 var cacheCmd = &Command{
 	Name: "cache",
 	Run: func(cmd *Command, args []string) error {
-		fmt.Println("cache dir is")
+		fmt.Println(store.CacheDir())
 		return nil
 	},
 }
 
 var removeCmd = &Command{
-	Name: "remove",
+	Name:    "remove",
 	Aliases: []string{"r", "delete", "d"},
 	Run: func(cmd *Command, args []string) error {
 		fmt.Println("remove", args)
@@ -24,4 +27,3 @@ func init() {
 	rootCmd.AddCommands(cacheCmd)
 	cacheCmd.AddCommands(removeCmd)
 }
-

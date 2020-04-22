@@ -6,40 +6,38 @@ type Status int
 
 const (
 	Accept = iota
-	Deny = iota
-	None = iota
-	Easy = 1
-	Medium = 2
-	Hard = 3
-	Accepted = "ac"
+	Deny   = iota
+	None   = iota
 )
 
 type Filter struct {
-	Tags []string
-	Easy Status
-	Medium Status
-	Hard Status
+	Tags     []string
+	Easy     Status
+	Medium   Status
+	Hard     Status
 	Accepted Status
-	Starred Status
-	Paid Status
+	Starred  Status
+	Paid     Status
 }
 
 func Check(p linecode.Problem, tags []linecode.Tag, f Filter) bool {
 	fail := false
 
+	// check if there is a positive difficulty check filter
 	d := f.Easy == Accept || f.Medium == Accept || f.Hard == Accept
+
 	switch p.Difficulty.Level {
-	case Easy:
+	case linecode.Easy:
 		fail = shouldFail(true, f.Easy, d)
-	case Medium:
+	case linecode.Medium:
 		fail = shouldFail(true, f.Medium, d)
-	case Hard:
+	case linecode.Hard:
 		fail = shouldFail(true, f.Hard, d)
 	}
 
 	fail = fail || shouldFail(p.Starred, f.Starred, false)
 	fail = fail || shouldFail(p.PaidOnly, f.Paid, false)
-	fail = fail || shouldFail(p.Status == Accepted, f.Accepted, false)
+	fail = fail || shouldFail(p.Status == linecode.Accepted, f.Accepted, false)
 	fail = fail || !hasAnyTag(p, f.Tags, tags)
 
 	return !fail

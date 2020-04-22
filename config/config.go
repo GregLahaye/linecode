@@ -1,12 +1,16 @@
 package config
 
 import (
-	"github.com/GregLahaye/linecode/chrome"
+	"fmt"
+	"github.com/GregLahaye/linecode/config/chrome"
+	"github.com/GregLahaye/linecode/convert"
+	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
 )
 
 type User struct {
-	Language string
+	Language  string
+	Hash      string
 	SessionID string
 	CSRFToken string
 }
@@ -21,6 +25,8 @@ func Config() (User, error) {
 	return u, nil
 }
 
+type AAA []fmt.Stringer
+
 func setup() (User, error) {
 	u := User{}
 
@@ -29,11 +35,24 @@ func setup() (User, error) {
 		return u, err
 	}
 
-	u.Language = "python3"
+	language := selectLanguage()
+
+	u.Language = language
 	u.SessionID = SessionID
 	u.CSRFToken = CSRFToken
 
 	err = store.SaveToConfig(u, userFilename)
 
 	return u, err
+}
+
+func selectLanguage() string {
+	var s []string
+	for _, l := range linecode.Languages {
+		s = append(s, l.String())
+	}
+
+	i := convert.Selection(s)
+
+	return linecode.Languages[i].Slug
 }

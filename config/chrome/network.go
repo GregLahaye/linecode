@@ -2,7 +2,6 @@ package chrome
 
 import (
 	"encoding/json"
-	"github.com/GregLahaye/linecode/leetcode"
 	"golang.org/x/net/websocket"
 )
 
@@ -86,7 +85,7 @@ func (c *chrome) waitForLogin() error {
 		if m.Method == "Network.requestWillBeSent" {
 			r := request{}
 			json.Unmarshal(m.Params, &r)
-			if r.Request.Method == "POST" && r.Request.URL == leetcode.BaseURL+"/accounts/login/" {
+			if r.Request.Method == "POST" && r.Request.URL == "https://leetcode.com/accounts/login/" {
 				requestID = r.RequestID
 			}
 		} else if m.Method == "Network.responseReceived" {

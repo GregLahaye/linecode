@@ -20,4 +20,3 @@ func ReadFromConfig(v interface{}, f string) error {
 	p := path.Join(ConfigDir(), f)
 	return readStruct(v, p)
 }
-

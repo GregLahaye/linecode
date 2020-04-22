@@ -7,7 +7,8 @@ import (
 )
 
 var listCmd = &Command{
-	Name: "list",
+	Name:    "list",
+	Aliases: []string{"l"},
 	Run: func(cmd *Command, args []string) error {
 		f := fh.Parse()
 
@@ -26,6 +27,7 @@ var listCmd = &Command{
 				fmt.Println(p)
 			}
 		}
+
 		return nil
 	},
 }

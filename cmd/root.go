@@ -8,21 +8,21 @@ import (
 )
 
 type Command struct {
-	Name string
-	Aliases []string
-	Run func(cmd *Command, args []string) error
-	ArgN int
-	Flags *flag.FlagSet
+	Name     string
+	Aliases  []string
+	Run      func(cmd *Command, args []string) error
+	ArgN     int
+	Flags    *flag.FlagSet
 	commands []*Command
 }
 
-func (c *Command) AddCommands (args... *Command) {
+func (c *Command) AddCommands(args ...*Command) {
 	for _, x := range args {
 		c.commands = append(c.commands, x)
 	}
 }
 
-func (c *Command) ParseFlags(args []string) error  {
+func (c *Command) ParseFlags(args []string) error {
 	if c.Flags == nil {
 		return nil
 	}
@@ -73,7 +73,7 @@ func (c *Command) execute(args []string) error {
 	return fmt.Errorf("command does not exist")
 }
 
-func isMatch(c *Command, s string) bool  {
+func isMatch(c *Command, s string) bool {
 	if c.Name == s {
 		return true
 	}
@@ -90,7 +90,7 @@ func isMatch(c *Command, s string) bool  {
 var fh filter.Holder
 
 var rootCmd = &Command{
-	Name:      "linecode",
+	Name: "linecode",
 }
 
 func Execute() {
@@ -99,4 +99,3 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-

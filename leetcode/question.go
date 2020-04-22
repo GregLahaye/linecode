@@ -2,26 +2,37 @@ package leetcode
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/GregLahaye/linecode/config"
+	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
 	"path"
+	"strings"
 )
 
 var questionDirectory = "questions"
 
-func GetQuestion() (linecode.Question, error) {
+func GetQuestion(arg string) (linecode.Question, error) {
 	var question linecode.Question
 
-	p := path.Join(questionDirectory, "???")
+	id, slug, err := Search(arg)
+	if err != nil {
+		return linecode.Question{}, err
+	}
+
+	filename := convert.IntToString(id) + "." + slug + ".json"
+	p := path.Join(questionDirectory, filename)
 	if err := store.ReadFromCache(&question, p); err == nil {
 		return question, nil
 	}
 
-	if question, err := FetchQuestion("SLUG"); err != nil {
+	question, err = FetchQuestion(slug)
+	if err != nil {
 		return question, err
 	}
 
-	err := store.SaveToCache(question, p)
+	err = store.SaveToCache(question, p)
 
 	return question, err
 }
@@ -45,4 +56,39 @@ func FetchQuestion(slug string) (linecode.Question, error) {
 	}
 
 	return v.Data.Question, nil
+}
+
+func SaveSnippet(q linecode.Question) error {
+	c, _ := config.Config()
+
+	var l linecode.Language
+	for _, l = range linecode.Languages {
+		if l.Slug == c.Language {
+			break
+		}
+	}
+
+	for _, s := range q.CodeSnippets {
+		if s.Slug == c.Language {
+			filename := fmt.Sprintf("%s.%s.%s", q.ID, q.Slug, l.Extension)
+			snippet := createSnippet(q.Content, s.Code, l.Comment)
+			return store.WriteFile(snippet, filename)
+		}
+	}
+
+	return fmt.Errorf("could not find language")
+}
+
+func createSnippet(content, code string, comment linecode.Comment) string {
+	var s strings.Builder
+
+	s.WriteString(comment.Start)
+	s.WriteString("\n")
+	s.WriteString(content)
+	s.WriteString("\n")
+	s.WriteString(comment.End)
+	s.WriteString("\n\n")
+	s.WriteString(code)
+
+	return s.String()
 }

@@ -1,14 +1,13 @@
 package chrome
 
-
 import (
-"bufio"
-"encoding/json"
-"errors"
-"golang.org/x/net/websocket"
-"io"
-"os"
-"os/exec"
+	"bufio"
+	"encoding/json"
+	"errors"
+	"golang.org/x/net/websocket"
+	"io"
+	"os"
+	"os/exec"
 	"path"
 	"regexp"
 )
@@ -86,7 +85,7 @@ func open() (*chrome, error) {
 		return nil, err
 	}
 
-	args := []string{"https://leetcode.com/accounts/login/", "--remote-debugging-port=0", "--config-data-dir=" + dir}
+	args := []string{"https://leetcode.com/accounts/login/", "--remote-debugging-port=0", "--user-data-dir=" + dir}
 	cmd := exec.Command(locate(), args...)
 
 	pipe, err := cmd.StderrPipe()

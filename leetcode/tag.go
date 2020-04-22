@@ -14,11 +14,12 @@ func GetTags() ([]linecode.Tag, error) {
 		return tags, nil
 	}
 
-	if tags, err := FetchTags(); err != nil {
+	tags, err := FetchTags()
+	if err != nil {
 		return tags, err
 	}
 
-	err := store.SaveToCache(tags, tagsFilename)
+	err = store.SaveToCache(tags, tagsFilename)
 
 	return tags, err
 }

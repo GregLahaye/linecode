@@ -7,6 +7,10 @@ import (
 	"path"
 )
 
+func WriteFile(s, f string) error {
+	return ioutil.WriteFile(f, []byte(s), os.ModePerm)
+}
+
 func writeStruct(v interface{}, p string) error {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {

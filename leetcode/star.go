@@ -3,12 +3,24 @@ package leetcode
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/GregLahaye/linecode/config"
+	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/store"
 )
 
-func Star(id, hash string) error {
+func Star(arg string) error {
+	hash, err := GetHash()
+	if err != nil {
+		return err
+	}
+
+	id, _, err := Search(arg)
+	if err != nil {
+		return err
+	}
+
 	data := dict{"favorite_id_hash": hash, "question_id": id}
-	_, err := request("POST", "/list/api/questions", data)
+	_, err = request("POST", "/list/api/questions", data)
 	if err != nil {
 		return err
 	}
@@ -16,13 +28,32 @@ func Star(id, hash string) error {
 	return store.RemoveFromCache(problemsFilename)
 }
 
-func Unstar(id, hash string) error {
-	_, err := request("DELETE", "/list/api/questions/" + hash + "/" + id, nil)
+func Unstar(arg string) error {
+	hash, err := GetHash()
+	if err != nil {
+		return err
+	}
+
+	id, _, err := Search(arg)
+	if err != nil {
+		return err
+	}
+
+	_, err = request("DELETE", "/list/api/questions/"+hash+"/"+convert.IntToString(id), nil)
 	if err != nil {
 		return err
 	}
 
 	return store.RemoveFromCache(problemsFilename)
+}
+
+func GetHash() (string, error) {
+	c, err := config.Config()
+	if err == nil && c.Hash != "" {
+		return c.Hash, nil
+	}
+
+	return FetchHash()
 }
 
 func FetchHash() (string, error) {
