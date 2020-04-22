@@ -1,6 +1,20 @@
 package cmd
 
-import "flag"
+import (
+	"flag"
+	"strings"
+)
+
+type ArrayFlags []string
+
+func (a *ArrayFlags) String() string {
+	return strings.Join(*a, ", ")
+}
+
+func (a *ArrayFlags) Set(value string) error {
+	*a = append(*a, value)
+	return nil
+}
 
 
 // this will be moved to different package
@@ -13,6 +27,7 @@ const (
 )
 
 type Filter struct {
+	Tags []string
 	Easy Status
 	Medium Status
 	Hard Status
@@ -23,6 +38,7 @@ type Filter struct {
 //
 
 type filterHolder struct {
+	Tags ArrayFlags
 	Easy *bool
 	NotEasy *bool
 	Medium *bool
@@ -39,6 +55,7 @@ type filterHolder struct {
 
 func (fh filterHolder) parse() Filter {
 	var f Filter
+	f.Tags = fh.Tags
 	f.Easy = filterStatus(fh.Easy, fh.NotEasy)
 	f.Medium = filterStatus(fh.Medium, fh.NotMedium)
 	f.Hard = filterStatus(fh.Hard, fh.Hard)
@@ -60,6 +77,7 @@ func filterStatus(yes, no *bool) Status {
 
 func filterFlags(name string, fh *filterHolder) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
+	fs.Var(fh.Tags,"t", "tags")
 	fh.Easy = fs.Bool("e", false, "easy")
 	fh.NotEasy = fs.Bool("E", false, "not easy")
 	fh.Medium = fs.Bool("m", false, "medium")

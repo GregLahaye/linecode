@@ -6,22 +6,6 @@ import (
 	"github.com/GregLahaye/yoyo/styles"
 )
 
-type Problem struct {
-	Stat struct {
-		ID             int    `json:"question_id"`
-		Title          string `json:"question__title"`
-		Slug           string `json:"question__title_slug"`
-		TotalAccepted  int    `json:"total_acs"`
-		TotalSubmitted int    `json:"total_submitted"`
-	} `json:"stat"`
-	Status     string `json:"status"`
-	Difficulty struct {
-		Level int `json:"level"`
-	} `json:"difficulty"`
-	PaidOnly bool `json:"paid_only"`
-	Starred  bool `json:"is_favor"`
-}
-
 const problemsFilename = "problems.json"
 
 func (u *User) GetProblems() ([]Problem, error) {

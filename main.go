@@ -1,9 +1,8 @@
 package main
 
-import "github.com/GregLahaye/linecode/cmd"
-
-const project = "linecode"
-const baseUrl = "https://leetcode.com"
+import (
+	"github.com/GregLahaye/linecode/cmd"
+)
 
 func main() {
 	cmd.Execute()
