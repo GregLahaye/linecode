@@ -64,10 +64,10 @@ func Flags(name string, h *Holder) *flag.FlagSet {
 	h.Hard = fs.Bool("h", false, "hard")
 	h.NotHard = fs.Bool("H", false, "not hard")
 	h.Accepted = fs.Bool("a", false, "accepted")
-	h.NotAccepted = fs.Bool("A", false, "not accepted")
+	h.NotAccepted = fs.Bool("A", true, "not accepted")
 	h.Starred = fs.Bool("s", false, "starred")
 	h.NotStarred = fs.Bool("S", false, "not starred")
 	h.Paid = fs.Bool("p", false, "paid")
-	h.NotPaid = fs.Bool("P", false, "not paid")
+	h.NotPaid = fs.Bool("P", true, "not paid")
 	return fs
 }

@@ -130,7 +130,7 @@ func findByQuery(query string) (linecode.Problem, error) {
 		s = append(s, p.String())
 	}
 
-	i := convert.Selection(s)
+	i := convert.Select(s)
 
 	return problems[i], nil
 }

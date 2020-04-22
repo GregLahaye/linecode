@@ -1,10 +1,19 @@
 package convert
 
 import (
+	"github.com/GregLahaye/yogurt"
 	"golang.org/x/net/html"
 	"strconv"
 	"strings"
 )
+
+func ForegroundStringReset(c, s string) string {
+	return yogurt.Foreground(c) + s + yogurt.ResetForeground
+}
+
+func BackgroundStringReset(c, s string) string {
+	return yogurt.Background(c) + s + yogurt.ResetBackground
+}
 
 func IntToString(i int) string {
 	return strconv.Itoa(i)

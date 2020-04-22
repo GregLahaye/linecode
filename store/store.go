@@ -11,6 +11,11 @@ func WriteFile(s, f string) error {
 	return ioutil.WriteFile(f, []byte(s), os.ModePerm)
 }
 
+func ReadFile(f string) (string, error) {
+	b, err := ioutil.ReadFile(f)
+	return string(b), err
+}
+
 func writeStruct(v interface{}, p string) error {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {

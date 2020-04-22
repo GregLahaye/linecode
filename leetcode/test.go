@@ -2,10 +2,39 @@ package leetcode
 
 import (
 	"encoding/json"
+	"github.com/GregLahaye/linecode/config"
+	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
+	"github.com/GregLahaye/linecode/store"
 )
 
-func TestCode(id int, slug, language, code, testcase string) (linecode.Submission, error) {
+func TestCode(filename string) (linecode.Submission, error) {
+	var submission linecode.Submission
+
+	id, slug, err := parseFilename(filename)
+	if err != nil {
+		return submission, err
+	}
+
+	c, _ := config.Config()
+	language := c.Language
+
+	code, err := store.ReadFile(filename)
+	if err != nil {
+		return submission, err
+	}
+
+	testcase, err := convert.MultilineInput("Testcase")
+	if err != nil {
+		return submission, err
+	}
+
+	clearQuestion(id, slug)
+
+	return testCode(id, slug, language, code, testcase)
+}
+
+func testCode(id, slug, language, code, testcase string) (linecode.Submission, error) {
 	var submission linecode.Submission
 
 	data := dict{"lang": language, "question_id": id, "typed_code": code, "data_input": testcase}

@@ -52,7 +52,7 @@ func selectLanguage() string {
 		s = append(s, l.String())
 	}
 
-	i := convert.Selection(s)
+	i := convert.Select(s)
 
 	return linecode.Languages[i].Slug
 }

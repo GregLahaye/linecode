@@ -71,7 +71,7 @@ func SaveSnippet(q linecode.Question) error {
 	for _, s := range q.CodeSnippets {
 		if s.Slug == c.Language {
 			filename := fmt.Sprintf("%s.%s.%s", q.ID, q.Slug, l.Extension)
-			snippet := createSnippet(q.Content, s.Code, l.Comment)
+			snippet := createSnippet(convert.ParseHTML(q.Content), s.Code, l.Comment)
 			return store.WriteFile(snippet, filename)
 		}
 	}
