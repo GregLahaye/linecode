@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/GregLahaye/linecode/config/chrome"
 	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
@@ -24,8 +23,6 @@ func Config() (User, error) {
 	}
 	return u, nil
 }
-
-type AAA []fmt.Stringer
 
 func setup() (User, error) {
 	u := User{}
