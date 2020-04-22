@@ -13,11 +13,11 @@ func ConfigDir() string {
 
 func SaveToConfig(v interface{}, f string) error {
 	p := path.Join(ConfigDir(), f)
-	return WriteStruct(v, p)
+	return writeStruct(v, p)
 }
 
 func ReadFromConfig(v interface{}, f string) error {
 	p := path.Join(ConfigDir(), f)
-	return ReadStruct(v, p)
+	return readStruct(v, p)
 }
 

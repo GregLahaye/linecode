@@ -2,6 +2,7 @@ package leetcode
 
 import (
 	"encoding/json"
+	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 )
 
@@ -21,5 +22,5 @@ func SubmitCode(id int, slug, language, code string) (linecode.Submission, error
 		return submission, err
 	}
 
-	return retry(IntToString(v.SubmissionID))
+	return retry(convert.IntToString(v.SubmissionID))
 }

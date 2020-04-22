@@ -3,7 +3,28 @@ package leetcode
 import (
 	"encoding/json"
 	"github.com/GregLahaye/linecode/linecode"
+	"github.com/GregLahaye/linecode/store"
+	"path"
 )
+
+var questionDirectory = "questions"
+
+func GetQuestion() (linecode.Question, error) {
+	var question linecode.Question
+
+	p := path.Join(questionDirectory, "???")
+	if err := store.ReadFromCache(&question, p); err == nil {
+		return question, nil
+	}
+
+	if question, err := FetchQuestion("SLUG"); err != nil {
+		return question, err
+	}
+
+	err := store.SaveToCache(question, p)
+
+	return question, err
+}
 
 func FetchQuestion(slug string) (linecode.Question, error) {
 	var question linecode.Question

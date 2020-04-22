@@ -3,6 +3,7 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"github.com/GregLahaye/linecode/filter"
 	"os"
 )
 
@@ -85,6 +86,8 @@ func isMatch(c *Command, s string) bool  {
 
 	return false
 }
+
+var fh filter.Holder
 
 var rootCmd = &Command{
 	Name:      "linecode",

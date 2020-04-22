@@ -1,6 +1,10 @@
 package leetcode
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/GregLahaye/linecode/store"
+)
 
 func Star(id, hash string) error {
 	data := dict{"favorite_id_hash": hash, "question_id": id}
@@ -9,16 +13,16 @@ func Star(id, hash string) error {
 		return err
 	}
 
-	return CacheDestroy(problemsFilename)
+	return store.RemoveFromCache(problemsFilename)
 }
 
 func Unstar(id, hash string) error {
-	_, err := u.Request("DELETE", "/list/api/questions/" + hash + "/" + id, nil)
+	_, err := request("DELETE", "/list/api/questions/" + hash + "/" + id, nil)
 	if err != nil {
 		return err
 	}
 
-	return CacheDestroy(problemsFilename)
+	return store.RemoveFromCache(problemsFilename)
 }
 
 func FetchHash() (string, error) {
@@ -45,4 +49,6 @@ func FetchHash() (string, error) {
 			return i.Hash, nil
 		}
 	}
+
+	return "", fmt.Errorf("could not find hash")
 }

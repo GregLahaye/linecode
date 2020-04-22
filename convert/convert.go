@@ -1,4 +1,4 @@
-package main
+package convert
 
 import (
 	"golang.org/x/net/html"
@@ -14,21 +14,21 @@ func FloatToString(f float64) string {
 	return strconv.FormatFloat(f, 'f', 2, 64)
 }
 
-func PadString(str string, max int, left bool) string {
-	length := len(str)
+func PadString(s string, max int, left bool) string {
+	length := len(s)
 	if length > max {
-		return str
+		return s
 	}
 
 	difference := max - length
 	padding := strings.Repeat(" ", difference)
 	if left {
-		str = padding + str
+		s = padding + s
 	} else {
-		str += padding
+		s += padding
 	}
 
-	return str
+	return s
 }
 
 func ParseHTML(h string) string {

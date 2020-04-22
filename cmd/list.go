@@ -1,19 +1,37 @@
 package cmd
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/GregLahaye/linecode/filter"
+	"github.com/GregLahaye/linecode/leetcode"
+)
 
 var listCmd = &Command{
 	Name: "list",
 	Run: func(cmd *Command, args []string) error {
-		// list questions
-		f := fh.parse()
-		fmt.Println(f)
+		f := fh.Parse()
+
+		problems, err := leetcode.GetProblems()
+		if err != nil {
+			return err
+		}
+
+		tags, err := leetcode.GetTags()
+		if err != nil {
+			return err
+		}
+
+		for _, p := range problems {
+			if filter.Check(p, tags, f) {
+				fmt.Println(p)
+			}
+		}
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommands(listCmd)
-	listCmd.Flags = filterFlags("list", &fh)
+	listCmd.Flags = filter.Flags("list", &fh)
 	listCmd.Flags.Bool("help", false, "display help")
 }

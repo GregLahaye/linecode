@@ -7,7 +7,7 @@ import (
 	"path"
 )
 
-func WriteStruct(v interface{}, p string) error {
+func writeStruct(v interface{}, p string) error {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func WriteStruct(v interface{}, p string) error {
 	return nil
 }
 
-func ReadStruct(v interface{}, p string) error {
+func readStruct(v interface{}, p string) error {
 	f, err := os.Open(p)
 	if err != nil {
 		return err

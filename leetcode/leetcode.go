@@ -14,8 +14,8 @@ const (
 )
 
 var (
-	SessionID string
-	CSRFToken string
+	sessionID string
+	csrfToken string
 )
 
 func request(method, path string, data dict) ([]byte, error) {
@@ -31,10 +31,10 @@ func request(method, path string, data dict) ([]byte, error) {
 		return nil, err
 	}
 
-	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: CSRFToken, Domain: ".leetcode.com"})
-	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: SessionID, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "csrftoken", Value: csrfToken, Domain: ".leetcode.com"})
+	req.AddCookie(&http.Cookie{Name: "LEETCODE_SESSION", Value: sessionID, Domain: ".leetcode.com"})
 
-	req.Header.Set("X-CSRFToken", CSRFToken)
+	req.Header.Set("X-csrfToken", csrfToken)
 	req.Header.Set("X-Requested-With", "XMLHttpRequest")
 	req.Header.Set("Referer", BaseURL)
 	req.Header.Set("Content-Type", "application/json")

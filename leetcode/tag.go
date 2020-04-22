@@ -3,10 +3,28 @@ package leetcode
 import (
 	"encoding/json"
 	"github.com/GregLahaye/linecode/linecode"
+	"github.com/GregLahaye/linecode/store"
 )
 
+const tagsFilename = "tags.json"
+
+func GetTags() ([]linecode.Tag, error) {
+	var tags []linecode.Tag
+	if err := store.ReadFromCache(&tags, tagsFilename); err == nil {
+		return tags, nil
+	}
+
+	if tags, err := FetchTags(); err != nil {
+		return tags, err
+	}
+
+	err := store.SaveToCache(tags, tagsFilename)
+
+	return tags, err
+}
+
 func FetchTags() ([]linecode.Tag, error) {
-	body, err := u.Request("GET", "/problems/api/tags/", nil)
+	body, err := request("GET", "/problems/api/tags/", nil)
 	if err != nil {
 		return nil, err
 	}

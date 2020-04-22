@@ -13,10 +13,15 @@ func CacheDir() string {
 
 func SaveToCache(v interface{}, f string) error {
 	p := path.Join(CacheDir(), f)
-	return WriteStruct(v, p)
+	return writeStruct(v, p)
+}
+
+func RemoveFromCache(f string) error {
+	p := path.Join(CacheDir(), f)
+	return os.Remove(p)
 }
 
 func ReadFromCache(v interface{}, f string) error {
 	p := path.Join(CacheDir(), f)
-	return ReadStruct(v, p)
+	return readStruct(v, p)
 }
