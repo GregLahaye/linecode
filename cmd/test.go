@@ -20,7 +20,6 @@ var testCmd = &Command{
 	ArgN: 1,
 }
 
-
 func init() {
 	rootCmd.AddCommands(testCmd)
 }

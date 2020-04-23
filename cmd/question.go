@@ -21,7 +21,7 @@ var questionCmd = &Command{
 		fmt.Println(question)
 		return nil
 	},
-	ArgN:  1,
+	ArgN: 1,
 }
 
 var starCmd = &Command{

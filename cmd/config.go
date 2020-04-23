@@ -5,7 +5,6 @@ import (
 	"github.com/GregLahaye/linecode/store"
 )
 
-
 var configCmd = &Command{
 	Name: "config",
 	Run: func(cmd *Command, args []string) error {
@@ -17,4 +16,3 @@ var configCmd = &Command{
 func init() {
 	rootCmd.AddCommands(configCmd)
 }
-

@@ -11,7 +11,7 @@ var statHolder filter.Holder
 var statCmd = &Command{
 	Name:    "stat",
 	Aliases: []string{"stats"},
-	Flags: filter.Flags("stat", &statHolder),
+	Flags:   filter.Flags("stat", &statHolder),
 	Run: func(cmd *Command, args []string) error {
 		f := statHolder.Parse()
 

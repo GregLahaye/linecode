@@ -12,6 +12,7 @@ const (
 
 type Filter struct {
 	Tags     []string
+	Sort     bool
 	Easy     Status
 	Medium   Status
 	Hard     Status

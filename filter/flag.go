@@ -18,6 +18,7 @@ func (a *arrayFlags) Set(value string) error {
 
 type Holder struct {
 	Tags        arrayFlags
+	Sort        *bool
 	Easy        *bool
 	NotEasy     *bool
 	Medium      *bool
@@ -35,6 +36,7 @@ type Holder struct {
 func (h Holder) Parse() Filter {
 	var f Filter
 	f.Tags = h.Tags
+	f.Sort = *h.Sort
 	f.Easy = status(h.Easy, h.NotEasy)
 	f.Medium = status(h.Medium, h.NotMedium)
 	f.Hard = status(h.Hard, h.Hard)
@@ -57,6 +59,7 @@ func status(yes, no *bool) Status {
 func Flags(name string, h *Holder) *flag.FlagSet {
 	fs := flag.NewFlagSet(name, flag.ContinueOnError)
 	fs.Var(&h.Tags, "t", "tags")
+	h.Sort = fs.Bool("r", false, "sort by acceptance")
 	h.Easy = fs.Bool("e", false, "easy")
 	h.NotEasy = fs.Bool("E", false, "not easy")
 	h.Medium = fs.Bool("m", false, "medium")
