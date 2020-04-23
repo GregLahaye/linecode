@@ -41,7 +41,6 @@ func verify(id string) (linecode.Submission, error) {
 	}
 
 	if err = json.Unmarshal(body, &submission); err != nil {
-		fmt.Println(string(body))
 		return submission, err
 	}
 

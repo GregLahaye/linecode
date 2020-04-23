@@ -6,8 +6,6 @@ import (
 	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
-	"github.com/GregLahaye/yoyo"
-	"github.com/GregLahaye/yoyo/styles"
 )
 
 func SubmitCode(filename string) (linecode.Submission, error) {
@@ -33,9 +31,6 @@ func SubmitCode(filename string) (linecode.Submission, error) {
 
 func submitCode(id, slug, language, code string) (linecode.Submission, error) {
 	var submission linecode.Submission
-
-	s := yoyo.Start(styles.Bounce)
-	defer s.End()
 
 	data := dict{"lang": language, "question_id": id, "typed_code": code}
 	body, err := request("POST", "/problems/"+slug+"/submit/", data)
