@@ -49,10 +49,6 @@ func (c *Command) execute(args []string) error {
 				return err
 			}
 
-			if x.Flags != nil {
-				args = x.Flags.Args()
-			}
-
 			// validate arguments
 			if len(args) < x.ArgN {
 				return fmt.Errorf("not enough arguments")

@@ -1,12 +1,10 @@
 package cmd
 
 import (
-	"flag"
 	"fmt"
 	"github.com/GregLahaye/linecode/leetcode"
 )
 
-var save bool
 var questionCmd = &Command{
 	Name:    "question",
 	Aliases: []string{"q"},
@@ -19,14 +17,11 @@ var questionCmd = &Command{
 		if question.PaidOnly {
 			return fmt.Errorf("%s is a locked question", question.Slug)
 		}
-		if save {
-			leetcode.SaveSnippet(question)
-		}
+		leetcode.SaveSnippet(question)
 		fmt.Println(question)
 		return nil
 	},
 	ArgN:  1,
-	Flags: flag.NewFlagSet("question", flag.ContinueOnError),
 }
 
 var starCmd = &Command{
@@ -50,5 +45,4 @@ var unstarCmd = &Command{
 func init() {
 	rootCmd.AddCommands(questionCmd)
 	questionCmd.AddCommands(starCmd, unstarCmd)
-	questionCmd.Flags.BoolVar(&save, "s", true, "save question snippet")
 }

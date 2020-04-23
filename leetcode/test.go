@@ -2,14 +2,16 @@ package leetcode
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/GregLahaye/linecode/config"
 	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
 )
 
-func TestCode(filename string) (linecode.Submission, error) {
+func TestCode(filename, testcase string) (linecode.Submission, error) {
 	var submission linecode.Submission
+	fmt.Println(testcase)
 
 	id, slug, err := parseFilename(filename)
 	if err != nil {
@@ -24,7 +26,7 @@ func TestCode(filename string) (linecode.Submission, error) {
 		return submission, err
 	}
 
-	testcase, err := convert.MultilineInput("Testcase (optional): ")
+	testcase, err = convert.MultilineInput("Testcase (optional): ")
 	if err != nil {
 		return submission, err
 	}
