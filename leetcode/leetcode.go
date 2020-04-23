@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/GregLahaye/linecode/config"
+	"github.com/GregLahaye/yoyo"
+	"github.com/GregLahaye/yoyo/styles"
 	"io/ioutil"
 	"net/http"
 )
@@ -15,6 +17,9 @@ const (
 )
 
 func request(method, path string, data dict) ([]byte, error) {
+	s := yoyo.Start(styles.Bounce)
+	defer s.End()
+
 	client := &http.Client{}
 
 	// create bytes from data

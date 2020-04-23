@@ -1,16 +1,38 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/GregLahaye/linecode/filter"
 	"github.com/GregLahaye/linecode/leetcode"
 	"github.com/GregLahaye/linecode/linecode"
 )
 
+var statHolder filter.Holder
+
 var statCmd = &Command{
 	Name:    "stat",
 	Aliases: []string{"stats"},
+	Flags: filter.Flags("stat", &statHolder),
 	Run: func(cmd *Command, args []string) error {
-		fmt.Println("not yet implemented")
+		f := statHolder.Parse()
+
+		all, err := leetcode.GetProblems()
+		if err != nil {
+			return err
+		}
+
+		tags, err := leetcode.GetTags()
+		if err != nil {
+			return err
+		}
+
+		var problems []linecode.Problem
+		for _, problem := range all {
+			if filter.Check(problem, tags, f) {
+				problems = append(problems, problem)
+			}
+		}
+
+		linecode.DisplayStat(problems)
 		return nil
 	},
 }
@@ -33,4 +55,5 @@ var graphCmd = &Command{
 func init() {
 	rootCmd.AddCommands(statCmd)
 	statCmd.AddCommands(graphCmd)
+	statCmd.Flags = filter.Flags("stat", &statHolder)
 }

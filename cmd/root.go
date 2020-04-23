@@ -3,7 +3,6 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"github.com/GregLahaye/linecode/filter"
 	"os"
 )
 
@@ -45,6 +44,15 @@ func (c *Command) execute(args []string) error {
 	args = args[1:]
 	for _, x := range c.commands {
 		if isMatch(x, subcommand) {
+			// parse flags
+			if err := x.ParseFlags(args); err != nil {
+				return err
+			}
+
+			if x.Flags != nil {
+				args = x.Flags.Args()
+			}
+
 			// validate arguments
 			if len(args) < x.ArgN {
 				return fmt.Errorf("not enough arguments")
@@ -58,11 +66,6 @@ func (c *Command) execute(args []string) error {
 				args = append(args, positional...)
 
 				return x.execute(args)
-			}
-
-			// parse flags
-			if err := x.ParseFlags(args); err != nil {
-				return err
 			}
 
 			// run command
@@ -86,8 +89,6 @@ func isMatch(c *Command, s string) bool {
 
 	return false
 }
-
-var fh filter.Holder
 
 var rootCmd = &Command{
 	Name: "linecode",

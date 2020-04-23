@@ -24,7 +24,7 @@ func TestCode(filename string) (linecode.Submission, error) {
 		return submission, err
 	}
 
-	testcase, err := convert.MultilineInput("Testcase")
+	testcase, err := convert.MultilineInput("Testcase (optional): ")
 	if err != nil {
 		return submission, err
 	}

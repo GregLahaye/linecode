@@ -6,11 +6,14 @@ import (
 	"github.com/GregLahaye/linecode/leetcode"
 )
 
+var listHolder filter.Holder
+
 var listCmd = &Command{
 	Name:    "list",
 	Aliases: []string{"l"},
+	Flags: filter.Flags("list", &listHolder),
 	Run: func(cmd *Command, args []string) error {
-		f := fh.Parse()
+		f := listHolder.Parse()
 
 		problems, err := leetcode.GetProblems()
 		if err != nil {
@@ -34,6 +37,5 @@ var listCmd = &Command{
 
 func init() {
 	rootCmd.AddCommands(listCmd)
-	listCmd.Flags = filter.Flags("list", &fh)
-	listCmd.Flags.Bool("help", false, "display help")
+	listCmd.Flags = filter.Flags("list", &listHolder)
 }

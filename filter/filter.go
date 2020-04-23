@@ -5,9 +5,9 @@ import "github.com/GregLahaye/linecode/linecode"
 type Status int
 
 const (
-	Accept = iota
-	Deny   = iota
-	None   = iota
+	Accept = 0
+	Deny   = 1
+	None   = 2
 )
 
 type Filter struct {
