@@ -4,6 +4,8 @@ import (
 	"github.com/GregLahaye/convert"
 	"github.com/GregLahaye/yogurt"
 	"github.com/GregLahaye/yogurt/colors"
+	"golang.org/x/crypto/ssh/terminal"
+	"os"
 	"strings"
 )
 
@@ -78,10 +80,14 @@ func (p Problem) String() string {
 		s.WriteString(" ")
 	}
 
+	// get width of terminal
+
+	w, _, _ := terminal.GetSize(int(os.Stdout.Fd()))
 	s.WriteString(" [")
 	s.WriteString(convert.PadString(convert.IntToString(p.Stat.ID), 4, true))
 	s.WriteString("] ")
-	s.WriteString(convert.PadString(p.Stat.Slug, 80, false))
+	// the length of the string without the slug is 30
+	s.WriteString(convert.PadString(p.Stat.Slug, w-30, false))
 	s.WriteString("  ")
 	s.WriteString(p.Difficulty.Color())
 	s.WriteString(convert.PadString(p.Difficulty.String(), 6, false))
