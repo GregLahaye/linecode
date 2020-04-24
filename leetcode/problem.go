@@ -3,8 +3,8 @@ package leetcode
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/GregLahaye/input"
 	"github.com/GregLahaye/linecode/config"
-	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
 	"net/url"
@@ -108,8 +108,8 @@ func findByFilename(filename string) (linecode.Problem, error) {
 		return problem, err
 	}
 
-	if id, err := strconv.Atoi(i); err == nil{
-		if problem, err = findByID(id); err == nil{
+	if id, err := strconv.Atoi(i); err == nil {
+		if problem, err = findByID(id); err == nil {
 			return problem, nil
 		}
 	}
@@ -156,7 +156,7 @@ func findByQuery(query string) (linecode.Problem, error) {
 		s = append(s, p.String())
 	}
 
-	i := convert.Select(s)
+	i := input.Select(s)
 
 	return problems[i], nil
 }

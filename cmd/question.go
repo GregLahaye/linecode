@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/GregLahaye/linecode/browser"
+	"github.com/GregLahaye/browser"
 	"github.com/GregLahaye/linecode/leetcode"
 )
 
@@ -73,15 +73,16 @@ var unstarCmd = &Command{
 }
 
 var openCmd = &Command{
-	Name: "open",
+	Name:    "open",
+	Aliases: []string{"o"},
 	Run: func(cmd *Command, args []string) error {
 		_, slug, err := leetcode.Search(args[0])
-		if err == nil {
-			url := fmt.Sprintf("%s/problems/%s/", leetcode.BaseURL, slug)
-			fmt.Printf("Opening %s\n", url)
-			browser.Open(url)
+		if err != nil {
+			return err
 		}
-		return err
+		url := fmt.Sprintf("%s/problems/%s/", leetcode.BaseURL, slug)
+		fmt.Printf("Opening %s\n", url)
+		return browser.Open(url)
 	},
 }
 

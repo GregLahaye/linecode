@@ -1,8 +1,8 @@
 package config
 
 import (
+	"github.com/GregLahaye/input"
 	"github.com/GregLahaye/linecode/config/chrome"
-	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
 )
@@ -49,7 +49,7 @@ func selectLanguage() string {
 		s = append(s, l.String())
 	}
 
-	i := convert.Select(s)
+	i := input.Select(s)
 
 	return linecode.Languages[i].Slug
 }

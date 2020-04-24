@@ -3,8 +3,8 @@ package leetcode
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/GregLahaye/convert"
 	"github.com/GregLahaye/linecode/config"
-	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/store"
 )
 

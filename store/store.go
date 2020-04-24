@@ -14,7 +14,7 @@ func DoesExist(f string) bool {
 	return false
 }
 
-func DoesNotExist(f string) bool  {
+func DoesNotExist(f string) bool {
 	if _, err := os.Stat(f); os.IsNotExist(err) {
 		return true
 	}

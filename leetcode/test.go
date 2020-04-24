@@ -3,8 +3,8 @@ package leetcode
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/GregLahaye/input"
 	"github.com/GregLahaye/linecode/config"
-	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
 	"strings"
@@ -26,7 +26,7 @@ func TestCode(filename string) (linecode.Submission, error) {
 		return submission, err
 	}
 
-	testcase, err := convert.MultilineInput("Testcase (optional): ")
+	testcase, err := input.MultilineInput("Testcase (optional): ")
 	if err != nil {
 		return submission, err
 	}
@@ -39,8 +39,6 @@ func TestCode(filename string) (linecode.Submission, error) {
 		testcase = question.SampleTestCase
 		fmt.Println(testcase)
 	}
-
-	clearQuestion(id, slug)
 
 	return testCode(id, slug, language, code, testcase)
 }
