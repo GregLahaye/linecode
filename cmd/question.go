@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/GregLahaye/linecode/browser"
 	"github.com/GregLahaye/linecode/leetcode"
 )
 
@@ -55,13 +56,11 @@ var submitCmd = &Command{
 	ArgN: 1,
 }
 
-
 var starCmd = &Command{
 	Name: "star",
 	Run: func(cmd *Command, args []string) error {
 		arg := args[0]
-		leetcode.Star(arg)
-		return nil
+		return leetcode.Star(arg)
 	},
 }
 
@@ -69,12 +68,24 @@ var unstarCmd = &Command{
 	Name: "unstar",
 	Run: func(cmd *Command, args []string) error {
 		arg := args[0]
-		leetcode.Unstar(arg)
-		return nil
+		return leetcode.Unstar(arg)
+	},
+}
+
+var openCmd = &Command{
+	Name: "open",
+	Run: func(cmd *Command, args []string) error {
+		_, slug, err := leetcode.Search(args[0])
+		if err == nil {
+			url := fmt.Sprintf("%s/problems/%s/", leetcode.BaseURL, slug)
+			fmt.Printf("Opening %s\n", url)
+			browser.Open(url)
+		}
+		return err
 	},
 }
 
 func init() {
 	rootCmd.AddCommands(questionCmd)
-	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd)
+	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd, openCmd)
 }
