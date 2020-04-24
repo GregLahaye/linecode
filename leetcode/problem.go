@@ -3,6 +3,7 @@ package leetcode
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/GregLahaye/linecode/config"
 	"github.com/GregLahaye/linecode/convert"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
@@ -58,6 +59,10 @@ func Search(arg string) (int, string, error) {
 		return problem.Stat.ID, problem.Stat.Slug, nil
 	}
 
+	if problem, err := findByFilename(arg); err == nil {
+		return problem.Stat.ID, problem.Stat.Slug, nil
+	}
+
 	if problem, err := findByQuery(arg); err == nil {
 		return problem.Stat.ID, problem.Stat.Slug, nil
 	}
@@ -93,6 +98,27 @@ func findBySlug(slug string) (linecode.Problem, error) {
 	}
 
 	return linecode.Problem{}, fmt.Errorf("problem not found")
+}
+
+func findByFilename(filename string) (linecode.Problem, error) {
+	var problem linecode.Problem
+
+	i, slug, err := parseFilename(filename)
+	if err != nil {
+		return problem, err
+	}
+
+	if id, err := strconv.Atoi(i); err == nil{
+		if problem, err = findByID(id); err == nil{
+			return problem, nil
+		}
+	}
+
+	if problem, err = findBySlug(slug); err == nil {
+		return problem, nil
+	}
+
+	return problem, err
 }
 
 func findByQuery(query string) (linecode.Problem, error) {
@@ -133,4 +159,24 @@ func findByQuery(query string) (linecode.Problem, error) {
 	i := convert.Select(s)
 
 	return problems[i], nil
+}
+
+func FindFile(arg string) string {
+	if store.DoesExist(arg) {
+		return arg
+	}
+
+	id, slug, err := Search(arg)
+	if err != nil {
+		return arg
+	}
+
+	c, err := config.Config()
+	if err != nil {
+		return arg
+	}
+
+	l := linecode.FindLanguage(c.Language)
+	filename := fmt.Sprintf("%d.%s.%s", id, slug, l.Extension)
+	return filename
 }

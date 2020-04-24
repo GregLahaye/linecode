@@ -7,6 +7,20 @@ import (
 	"path"
 )
 
+func DoesExist(f string) bool {
+	if stat, err := os.Stat(f); err == nil {
+		return !stat.IsDir()
+	}
+	return false
+}
+
+func DoesNotExist(f string) bool  {
+	if _, err := os.Stat(f); os.IsNotExist(err) {
+		return true
+	}
+	return false
+}
+
 func WriteFile(s, f string) error {
 	return ioutil.WriteFile(f, []byte(s), os.ModePerm)
 }

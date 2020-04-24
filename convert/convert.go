@@ -43,16 +43,16 @@ func PadString(s string, max int, left bool) string {
 func ParseHTML(h string) string {
 	z := html.NewTokenizer(strings.NewReader(h))
 
-	s := ""
+	var s strings.Builder
 	for {
 		tt := z.Next()
 		t := z.Token()
 
 		switch tt {
 		case html.ErrorToken:
-			return s
+			return s.String()
 		case html.TextToken:
-			s += t.Data
+			s.WriteString(t.Data)
 		}
 	}
 }

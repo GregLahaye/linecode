@@ -24,6 +24,38 @@ var questionCmd = &Command{
 	ArgN: 1,
 }
 
+var testCmd = &Command{
+	Name:    "test",
+	Aliases: []string{"t"},
+	Run: func(cmd *Command, args []string) error {
+		filename := leetcode.FindFile(args[0])
+		submission, err := leetcode.TestCode(filename)
+		if err != nil {
+			return err
+		}
+		fmt.Println(submission)
+		return nil
+	},
+	ArgN: 1,
+}
+
+var submitCmd = &Command{
+	Name:    "submit",
+	Aliases: []string{"s"},
+	Run: func(cmd *Command, args []string) error {
+		filename := leetcode.FindFile(args[0])
+		submission, err := leetcode.SubmitCode(filename)
+		if err != nil {
+			return err
+		}
+		submission.Judge = "large"
+		fmt.Println(submission)
+		return nil
+	},
+	ArgN: 1,
+}
+
+
 var starCmd = &Command{
 	Name: "star",
 	Run: func(cmd *Command, args []string) error {
@@ -44,5 +76,5 @@ var unstarCmd = &Command{
 
 func init() {
 	rootCmd.AddCommands(questionCmd)
-	questionCmd.AddCommands(starCmd, unstarCmd)
+	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd)
 }

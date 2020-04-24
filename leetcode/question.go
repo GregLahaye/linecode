@@ -61,18 +61,15 @@ func FetchQuestion(slug string) (linecode.Question, error) {
 func SaveSnippet(q linecode.Question) error {
 	c, _ := config.Config()
 
-	var l linecode.Language
-	for _, l = range linecode.Languages {
-		if l.Slug == c.Language {
-			break
-		}
-	}
+	l := linecode.FindLanguage(c.Language)
 
 	for _, s := range q.CodeSnippets {
 		if s.Slug == c.Language {
 			filename := fmt.Sprintf("%s.%s.%s", q.ID, q.Slug, l.Extension)
 			snippet := createSnippet(convert.ParseHTML(q.Content), s.Code, l.Comment)
-			return store.WriteFile(snippet, filename)
+			if store.DoesNotExist(filename) {
+				return store.WriteFile(snippet, filename)
+			}
 		}
 	}
 
