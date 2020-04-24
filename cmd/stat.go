@@ -11,7 +11,7 @@ var statHolder filter.Holder
 var statCmd = &Command{
 	Name:    "stat",
 	Aliases: []string{"stats"},
-	Flags:   filter.Flags("stat", &statHolder),
+	Flags:   filter.DefaultFlags("stat", &statHolder),
 	Run: func(cmd *Command, args []string) error {
 		f := statHolder.Parse()
 
@@ -55,5 +55,4 @@ var graphCmd = &Command{
 func init() {
 	rootCmd.AddCommands(statCmd)
 	statCmd.AddCommands(graphCmd)
-	statCmd.Flags = filter.Flags("stat", &statHolder)
 }

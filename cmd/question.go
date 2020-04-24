@@ -22,7 +22,7 @@ var questionCmd = &Command{
 		fmt.Println(question)
 		return nil
 	},
-	ArgN: 1,
+	NArg: 1,
 }
 
 var testCmd = &Command{
@@ -37,7 +37,7 @@ var testCmd = &Command{
 		fmt.Println(submission)
 		return nil
 	},
-	ArgN: 1,
+	NArg: 1,
 }
 
 var submitCmd = &Command{
@@ -53,7 +53,7 @@ var submitCmd = &Command{
 		fmt.Println(submission)
 		return nil
 	},
-	ArgN: 1,
+	NArg: 1,
 }
 
 var starCmd = &Command{

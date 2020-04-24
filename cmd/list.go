@@ -11,7 +11,7 @@ var listHolder filter.Holder
 var listCmd = &Command{
 	Name:    "list",
 	Aliases: []string{"l"},
-	Flags:   filter.Flags("list", &listHolder),
+	Flags:   filter.PreferencesFlags("list", &listHolder),
 	Run: func(cmd *Command, args []string) error {
 		f := listHolder.Parse()
 
@@ -37,5 +37,4 @@ var listCmd = &Command{
 
 func init() {
 	rootCmd.AddCommands(listCmd)
-	listCmd.Flags = filter.Flags("list", &listHolder)
 }

@@ -10,7 +10,7 @@ type Command struct {
 	Name     string
 	Aliases  []string
 	Run      func(cmd *Command, args []string) error
-	ArgN     int
+	NArg     int
 	Flags    *flag.FlagSet
 	commands []*Command
 }
@@ -29,6 +29,14 @@ func (c *Command) ParseFlags(args []string) error {
 	return c.Flags.Parse(args)
 }
 
+func (c *Command) CountFlags() int {
+	if c.Flags == nil {
+		return 0
+	}
+
+	return c.Flags.NFlag()
+}
+
 func (c *Command) Execute() error {
 	args := os.Args[1:]
 
@@ -44,21 +52,21 @@ func (c *Command) execute(args []string) error {
 	args = args[1:]
 	for _, x := range c.commands {
 		if isMatch(x, subcommand) {
+			// validate arguments
+			if len(args) < x.NArg {
+				return fmt.Errorf("not enough arguments")
+			}
+
 			// parse flags
 			if err := x.ParseFlags(args); err != nil {
 				return err
 			}
 
-			// validate arguments
-			if len(args) < x.ArgN {
-				return fmt.Errorf("not enough arguments")
-			}
-
 			// there are sub-commands
-			if x.commands != nil && len(args) > x.ArgN {
+			if x.commands != nil && len(args) > x.NArg+x.CountFlags() {
 				// put positional arguments at end
-				positional := args[:x.ArgN]
-				args = args[x.ArgN:]
+				positional := args[:x.NArg]
+				args = args[x.NArg:]
 				args = append(args, positional...)
 
 				return x.execute(args)
