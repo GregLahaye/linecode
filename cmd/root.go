@@ -62,11 +62,19 @@ func (c *Command) execute(args []string) error {
 				return err
 			}
 
-			// there are sub-commands
-			if x.commands != nil && len(args) > x.NArg+x.CountFlags() {
-				// put positional arguments at end
-				positional := args[:x.NArg]
-				args = args[x.NArg:]
+			f := x.CountFlags()
+			// move flags to the end
+			if x.Flags != nil {
+				flags := args[:f]
+				args = args[f:]
+				args = append(args, flags...)
+			}
+
+			n := x.NArg + f // number of arguments to ignore
+			if x.commands != nil && len(args) > n {
+				// move positional arguments to the end
+				positional := args[:n]
+				args = args[n:]
 				args = append(args, positional...)
 
 				return x.execute(args)

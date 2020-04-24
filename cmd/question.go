@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"flag"
 	"fmt"
 	"github.com/GregLahaye/browser"
 	"github.com/GregLahaye/linecode/leetcode"
+	"strings"
 )
 
 var questionCmd = &Command{
@@ -25,19 +27,22 @@ var questionCmd = &Command{
 	NArg: 1,
 }
 
+var testcase string
 var testCmd = &Command{
 	Name:    "test",
 	Aliases: []string{"t"},
 	Run: func(cmd *Command, args []string) error {
 		filename := leetcode.FindFile(args[0])
-		submission, err := leetcode.TestCode(filename)
+		testcase = strings.ReplaceAll(testcase, "\\n", "\n")
+		submission, err := leetcode.TestCode(filename, testcase)
 		if err != nil {
 			return err
 		}
 		fmt.Println(submission)
 		return nil
 	},
-	NArg: 1,
+	NArg:  1,
+	Flags: flag.NewFlagSet("test", flag.ContinueOnError),
 }
 
 var submitCmd = &Command{
@@ -89,4 +94,5 @@ var openCmd = &Command{
 func init() {
 	rootCmd.AddCommands(questionCmd)
 	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd, openCmd)
+	testCmd.Flags.StringVar(&testcase, "t", "", "testcase")
 }

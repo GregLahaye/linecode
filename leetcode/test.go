@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func TestCode(filename string) (linecode.Submission, error) {
+func TestCode(filename, testcase string) (linecode.Submission, error) {
 	var submission linecode.Submission
 
 	id, slug, err := parseFilename(filename)
@@ -26,18 +26,20 @@ func TestCode(filename string) (linecode.Submission, error) {
 		return submission, err
 	}
 
-	testcase, err := input.MultilineInput("Testcase (optional): ")
-	if err != nil {
-		return submission, err
-	}
-
 	if strings.TrimSpace(testcase) == "" {
-		question, err := GetQuestion(id)
+		testcase, err = input.MultilineInput("Testcase (optional): ")
 		if err != nil {
 			return submission, err
 		}
-		testcase = question.SampleTestCase
-		fmt.Println(testcase)
+
+		if strings.TrimSpace(testcase) == "" {
+			question, err := GetQuestion(id)
+			if err != nil {
+				return submission, err
+			}
+			testcase = question.SampleTestCase
+			fmt.Printf("Using sample testcase: %s\n\n", testcase)
+		}
 	}
 
 	return testCode(id, slug, language, code, testcase)
