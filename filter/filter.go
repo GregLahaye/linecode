@@ -1,6 +1,9 @@
 package filter
 
-import "github.com/GregLahaye/linecode/linecode"
+import (
+	"github.com/GregLahaye/linecode/linecode"
+	"sort"
+)
 
 type Status int
 
@@ -13,6 +16,7 @@ const (
 type Filter struct {
 	Tags     []string
 	Sort     bool
+	Limit    int
 	Easy     Status
 	Medium   Status
 	Hard     Status
@@ -83,4 +87,35 @@ func hasTag(p linecode.Problem, slug string, tags []linecode.Tag) bool {
 	}
 
 	return false
+}
+
+func Array(a []linecode.Problem, t []linecode.Tag, f Filter) []linecode.Problem {
+	var problems []linecode.Problem
+	for _, p := range a {
+		if Check(p, t, f) {
+			problems = append(problems, p)
+		}
+	}
+
+	if f.Sort {
+		s := func(i, j int) bool {
+			a := problems[i]
+			b := problems[j]
+			x := float64(a.Stat.TotalAccepted) / float64(a.Stat.TotalSubmitted)
+			y := float64(b.Stat.TotalAccepted) / float64(b.Stat.TotalSubmitted)
+			return x < y
+		}
+
+		sort.Slice(problems, s)
+	}
+
+	if f.Limit > -1 {
+		i := len(problems) - f.Limit
+		if i < 0 {
+			i = 0
+		}
+		problems = problems[i:]
+	}
+
+	return problems
 }
