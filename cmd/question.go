@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/GregLahaye/browser"
+	"github.com/GregLahaye/input"
 	"github.com/GregLahaye/linecode/leetcode"
 	"github.com/GregLahaye/linecode/store"
 	"os"
@@ -31,12 +32,18 @@ var questionCmd = &Command{
 }
 
 var testcase string
+var d bool
 var testCmd = &Command{
 	Name:    "test",
 	Aliases: []string{"t", "run"},
 	Run: func(cmd *Command, args []string) error {
 		filename := leetcode.FindFile(args[0])
 		testcase = strings.ReplaceAll(testcase, "\\n", "\n")
+
+		if !d && strings.TrimSpace(testcase) == "" {
+			testcase, _ = input.MultilineInput("Testcase (optional): ")
+		}
+
 		submission, err := leetcode.TestCode(filename, testcase)
 		if err != nil {
 			return err
@@ -123,4 +130,5 @@ func init() {
 	rootCmd.AddCommands(questionCmd)
 	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd, editCmd, openCmd)
 	testCmd.Flags.StringVar(&testcase, "t", "", "testcase")
+	testCmd.Flags.BoolVar(&d, "d", false, "testcase")
 }

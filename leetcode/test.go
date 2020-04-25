@@ -3,7 +3,6 @@ package leetcode
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/GregLahaye/input"
 	"github.com/GregLahaye/linecode/config"
 	"github.com/GregLahaye/linecode/linecode"
 	"github.com/GregLahaye/linecode/store"
@@ -27,19 +26,12 @@ func TestCode(filename, testcase string) (linecode.Submission, error) {
 	}
 
 	if strings.TrimSpace(testcase) == "" {
-		testcase, err = input.MultilineInput("Testcase (optional): ")
+		question, err := GetQuestion(id)
 		if err != nil {
 			return submission, err
 		}
-
-		if strings.TrimSpace(testcase) == "" {
-			question, err := GetQuestion(id)
-			if err != nil {
-				return submission, err
-			}
-			testcase = question.SampleTestCase
-			fmt.Printf("Using sample testcase: %s\n\n", testcase)
-		}
+		testcase = question.SampleTestCase
+		fmt.Printf("Using sample testcase: %s\n\n", testcase)
 	}
 
 	return testCode(id, slug, language, code, testcase)
