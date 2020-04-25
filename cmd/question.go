@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/GregLahaye/browser"
 	"github.com/GregLahaye/input"
+	"github.com/GregLahaye/linecode/config"
 	"github.com/GregLahaye/linecode/leetcode"
 	"github.com/GregLahaye/linecode/store"
 	"os"
@@ -41,7 +42,7 @@ var testCmd = &Command{
 		testcase = strings.ReplaceAll(testcase, "\\n", "\n")
 
 		if !d && strings.TrimSpace(testcase) == "" {
-			testcase, _ = input.MultilineInput("Testcase (optional): ")
+			testcase = input.Multiline("Testcase (optional): ")
 		}
 
 		submission, err := leetcode.TestCode(filename, testcase)
@@ -92,6 +93,11 @@ var editCmd = &Command{
 	Aliases: []string{"e"},
 	Run: func(cmd *Command, args []string) error {
 		filename := leetcode.FindFile(args[0])
+		c, err := config.Config()
+		if err != nil {
+			return err
+		}
+
 		if store.DoesNotExist(filename) {
 			q, err := leetcode.GetQuestion(args[0])
 			if err != nil {
@@ -104,11 +110,15 @@ var editCmd = &Command{
 				return err
 			}
 		}
-		e := exec.Command("vim", filename)
-		e.Stdin = os.Stdin
-		e.Stdout = os.Stdout
-		err := e.Run()
-		return err
+
+		e := exec.Command(c.Editor, filename)
+		if c.Terminal {
+			e.Stdin = os.Stdin
+			e.Stdout = os.Stdout
+			return e.Run()
+		} else {
+			return e.Start()
+		}
 	},
 }
 

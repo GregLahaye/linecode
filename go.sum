@@ -4,6 +4,8 @@ github.com/GregLahaye/convert v0.0.0-20200424072343-46d7c8a56df3 h1:xY0f60Uu9h7U
 github.com/GregLahaye/convert v0.0.0-20200424072343-46d7c8a56df3/go.mod h1:gLdiG1vQBHD0StsbKwRZysLYMBLi11UqHnmjrWI9imo=
 github.com/GregLahaye/input v0.0.0-20200424072153-995e9936c7f9 h1:Ek9md45WWgp5eU93K6dKm8JhJK9DvbSBoi39ytiqJxc=
 github.com/GregLahaye/input v0.0.0-20200424072153-995e9936c7f9/go.mod h1:p0pqQRC1mkHKXa9MhJVETFSJbd2dt8TN1xaUuS58JsQ=
+github.com/GregLahaye/input v0.0.0-20200425050957-bce78b8782ae h1:uSBsAjkNjjXOK2C/TrMBZbYYJ8BP5Ppk8RfBt993cUs=
+github.com/GregLahaye/input v0.0.0-20200425050957-bce78b8782ae/go.mod h1:p0pqQRC1mkHKXa9MhJVETFSJbd2dt8TN1xaUuS58JsQ=
 github.com/GregLahaye/yogurt v0.0.0-20200419090816-b3f8e1a90298/go.mod h1:2ipRlQlNy+YPkS6EDLTlxnqVGE24pK7itejg2nGITDg=
 github.com/GregLahaye/yogurt v0.0.0-20200422115615-068ccb6c579f h1:T5cdyFEXYwT2tumhmyaPMZv2eg0E3dmgMctoVlVR4IM=
 github.com/GregLahaye/yogurt v0.0.0-20200422115615-068ccb6c579f/go.mod h1:2ipRlQlNy+YPkS6EDLTlxnqVGE24pK7itejg2nGITDg=
