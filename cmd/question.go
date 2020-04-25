@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"github.com/GregLahaye/browser"
 	"github.com/GregLahaye/linecode/leetcode"
+	"github.com/GregLahaye/linecode/store"
+	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -77,6 +80,31 @@ var unstarCmd = &Command{
 	},
 }
 
+var editCmd = &Command{
+	Name:    "edit",
+	Aliases: []string{"e"},
+	Run: func(cmd *Command, args []string) error {
+		filename := leetcode.FindFile(args[0])
+		if store.DoesNotExist(filename) {
+			q, err := leetcode.GetQuestion(args[0])
+			if err != nil {
+				return err
+			}
+			if q.PaidOnly {
+				return fmt.Errorf("%s is a locked question", q.Slug)
+			}
+			if err = leetcode.SaveSnippet(q); err != nil {
+				return err
+			}
+		}
+		e := exec.Command("vim", filename)
+		e.Stdin = os.Stdin
+		e.Stdout = os.Stdout
+		err := e.Run()
+		return err
+	},
+}
+
 var openCmd = &Command{
 	Name:    "open",
 	Aliases: []string{"o"},
@@ -93,6 +121,6 @@ var openCmd = &Command{
 
 func init() {
 	rootCmd.AddCommands(questionCmd)
-	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd, openCmd)
+	questionCmd.AddCommands(testCmd, submitCmd, starCmd, unstarCmd, editCmd, openCmd)
 	testCmd.Flags.StringVar(&testcase, "t", "", "testcase")
 }
