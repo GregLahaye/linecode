@@ -11,6 +11,8 @@ github.com/GregLahaye/yogurt v0.0.0-20200422115615-068ccb6c579f h1:T5cdyFEXYwT2t
 github.com/GregLahaye/yogurt v0.0.0-20200422115615-068ccb6c579f/go.mod h1:2ipRlQlNy+YPkS6EDLTlxnqVGE24pK7itejg2nGITDg=
 github.com/GregLahaye/yoyo v0.0.0-20200423073812-77246bb9cc51 h1:P2MqawJU9aVujzcQYEp2brwRxy4c124BFJ6KNz7/kmw=
 github.com/GregLahaye/yoyo v0.0.0-20200423073812-77246bb9cc51/go.mod h1:Iorww20OlDdQNQ1LTyTSZ6NwNoC2CV/Z6NrmUjK1CIM=
+github.com/GregLahaye/yoyo v0.0.0-20200425100455-8219e8c162e6 h1:7+9A/OHW6lKuG4rnHu8rc4+UQHsgKprhTpxb7PmhISE=
+github.com/GregLahaye/yoyo v0.0.0-20200425100455-8219e8c162e6/go.mod h1:EkMGKuQbXLxD0Gl/Ucw6Yn+sLJm1GqANVpxCdLe7pW0=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5 h1:Q7tZBpemrlsc2I7IyODzhtallWRSm4Q0d09pL6XbQtU=
