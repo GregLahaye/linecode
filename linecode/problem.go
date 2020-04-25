@@ -83,6 +83,9 @@ func (p Problem) String() string {
 	// get width of terminal
 
 	w, _, _ := terminal.GetSize(int(os.Stdout.Fd()))
+	if w < 1 || w > 120 {
+		w = 120
+	}
 	s.WriteString(" [")
 	s.WriteString(convert.PadString(convert.IntToString(p.Stat.ID), 4, true))
 	s.WriteString("] ")

@@ -10,7 +10,7 @@ import (
 
 var questionCmd = &Command{
 	Name:    "question",
-	Aliases: []string{"q"},
+	Aliases: []string{"q", "problem", "p"},
 	Run: func(cmd *Command, args []string) error {
 		arg := args[0]
 		question, err := leetcode.GetQuestion(arg)
@@ -30,7 +30,7 @@ var questionCmd = &Command{
 var testcase string
 var testCmd = &Command{
 	Name:    "test",
-	Aliases: []string{"t"},
+	Aliases: []string{"t", "run"},
 	Run: func(cmd *Command, args []string) error {
 		filename := leetcode.FindFile(args[0])
 		testcase = strings.ReplaceAll(testcase, "\\n", "\n")

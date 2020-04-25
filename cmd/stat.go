@@ -10,7 +10,7 @@ var statHolder filter.Holder
 
 var statCmd = &Command{
 	Name:    "stat",
-	Aliases: []string{"stats"},
+	Aliases: []string{"stats", "s"},
 	Flags:   filter.DefaultFlags("stat", &statHolder),
 	Run: func(cmd *Command, args []string) error {
 		f := statHolder.Parse()
